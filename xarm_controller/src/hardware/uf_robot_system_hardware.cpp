@@ -246,13 +246,13 @@ namespace uf_robot_hardware
 		xarm_driver_.arm->set_mode(velocity_control_ ? XARM_MODE::VELO_JOINT : XARM_MODE::SERVO);
 		xarm_driver_.arm->set_state(XARM_STATE::START);
 
-        req_list_controller_ = std::make_shared<controller_manager_msgs::srv::ListControllers::Request>();
-        res_list_controller_ = std::make_shared<controller_manager_msgs::srv::ListControllers::Response>();
-        req_switch_controller_ = std::make_shared<controller_manager_msgs::srv::SwitchController::Request>();
-        res_switch_controller_ = std::make_shared<controller_manager_msgs::srv::SwitchController::Response>();
+        // req_list_controller_ = std::make_shared<controller_manager_msgs::srv::ListControllers::Request>();
+        // res_list_controller_ = std::make_shared<controller_manager_msgs::srv::ListControllers::Response>();
+        // req_switch_controller_ = std::make_shared<controller_manager_msgs::srv::SwitchController::Request>();
+        // res_switch_controller_ = std::make_shared<controller_manager_msgs::srv::SwitchController::Response>();
 
-        client_list_controller_ = hw_node_->create_client<controller_manager_msgs::srv::ListControllers>("/controller_manager/list_controllers");
-        client_switch_controller_ = hw_node_->create_client<controller_manager_msgs::srv::SwitchController>("/controller_manager/switch_controller");
+        // client_list_controller_ = hw_node_->create_client<controller_manager_msgs::srv::ListControllers>("/controller_manager/list_controllers");
+        // client_switch_controller_ = hw_node_->create_client<controller_manager_msgs::srv::SwitchController>("/controller_manager/switch_controller");
 
         for (uint i = 0; i < position_states_.size(); i++) {
             if (std::isnan(position_states_[i])) {
@@ -325,7 +325,7 @@ namespace uf_robot_hardware
                     velocity_cmds_[i] = 0.0;
                 }
                 if (reload_controller_ && _check_cmds_is_change(curr_read_position_, prev_read_position_)) {
-                    _reload_controller();
+                    // _reload_controller();
                 }
             }
             memcpy(prev_read_position_, curr_read_position_, sizeof(float) * 7);
