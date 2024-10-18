@@ -125,14 +125,16 @@ namespace uf_robot_hardware
         }
         node_->set_parameter(rclcpp::Parameter("baud_checkset", baud_checkset));
 
-        bool add_gripper = true;
+        add_gripper_ = true;
         it = info_.hardware_parameters.find("add_gripper");
         if (it != info_.hardware_parameters.end()) {
-            add_gripper = (it->second == "True" || it->second == "true");
+            add_gripper_ = (it->second == "True" || it->second == "true");
         }
+        gripper_joint_name_ = prefix + "drive_joint";
+        node_->get_parameter_or("xarm_gripper.max_pos", max_gripper_pos_, 850);
         
-        if (robot_type == "lite") add_gripper = false;
-        node_->set_parameter(rclcpp::Parameter("add_gripper", add_gripper));
+        if (robot_type == "lite") add_gripper_ = false;
+        node_->set_parameter(rclcpp::Parameter("add_gripper", add_gripper_));
 
         bool add_bio_gripper = true;
         it = info_.hardware_parameters.find("add_bio_gripper");
@@ -148,7 +150,7 @@ namespace uf_robot_hardware
             velocity_control_ = (it->second == "True" || it->second == "true");
         }
         RCLCPP_INFO(LOGGER, "[%s] dof: %d, velocity_control: %d, add_gripper: %d, add_bio_gripper: %d, baud_checkset: %d, default_gripper_baud: %d", 
-            robot_ip_.c_str(), dof, velocity_control_, add_gripper, add_bio_gripper, baud_checkset, default_gripper_baud);
+            robot_ip_.c_str(), dof, velocity_control_, add_gripper_, add_bio_gripper, baud_checkset, default_gripper_baud);
         
         xarm_driver_.init(node_, robot_ip_);
     }
@@ -177,8 +179,11 @@ namespace uf_robot_hardware
         
         position_states_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
         velocity_states_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-        position_cmds_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
-        velocity_cmds_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
+        auto size = info_.joints.size();
+        if (add_gripper_)
+            size -= 1;
+        position_cmds_.resize(size, std::numeric_limits<double>::quiet_NaN());
+        velocity_cmds_.resize(size, std::numeric_limits<double>::quiet_NaN());
 
         for (const hardware_interface::ComponentInfo & joint : info_.joints) {
             bool has_pos_cmd_interface = false;
@@ -188,7 +193,7 @@ namespace uf_robot_hardware
                     break;
                 }
             }
-            if (!has_pos_cmd_interface) {
+            if (!has_pos_cmd_interface && (joint.name != gripper_joint_name_)) {
                 RCLCPP_ERROR(LOGGER, "[%s] Joint '%s' has %ld command interfaces found, but not found %s command interface",
                     robot_ip_.c_str(), joint.name.c_str(), joint.command_interfaces.size(), hardware_interface::HW_IF_POSITION
                 );
@@ -231,6 +236,8 @@ namespace uf_robot_hardware
     {
         std::vector<hardware_interface::CommandInterface> command_interfaces;
         for (uint i = 0; i < info_.joints.size(); i++) {
+            if (info_.joints[i].name == gripper_joint_name_)
+                continue;
             command_interfaces.emplace_back(hardware_interface::CommandInterface(
                 info_.joints[i].name, hardware_interface::HW_IF_POSITION, &position_cmds_[i]));
             command_interfaces.emplace_back(hardware_interface::CommandInterface(
@@ -297,6 +304,10 @@ namespace uf_robot_hardware
 		else
 			read_code_ = xarm_driver_.arm->get_servo_angle(curr_read_position_);
         
+        int ret;
+        if (add_gripper_)
+            ret = xarm_driver_.arm->get_gripper_position(&curr_read_gripper_position_);
+
         curr_read_time_ = node_->get_clock()->now();
         read_ready_ = read_ready_ && _xarm_is_ready_read();
         double time_sec = curr_read_time_.seconds() - start.seconds();
@@ -309,6 +320,14 @@ namespace uf_robot_hardware
         // }
         if (read_code_ == 0 && read_ready_) {
             for (int j = 0; j < info_.joints.size(); j++) {
+                if (info_.joints[j].name == gripper_joint_name_) {
+                    if (ret != 0)
+                        continue;
+                    position_states_[j] = fabs(max_gripper_pos_ - curr_read_gripper_position_) / 1000;
+                    velocity_states_[j] = 0.0;
+                    // effort_states_[j] = 0.0;
+                    continue;
+                }
                 position_states_[j] = curr_read_position_[j];
 				if (use_new) {
 					velocity_states_[j] = curr_read_velocity_[j];
