@@ -125,14 +125,15 @@ namespace uf_robot_hardware
         }
         node_->set_parameter(rclcpp::Parameter("baud_checkset", baud_checkset));
 
-        bool add_gripper = true;
+        add_gripper_ = true;
         it = info_.hardware_parameters.find("add_gripper");
         if (it != info_.hardware_parameters.end()) {
-            add_gripper = (it->second == "True" || it->second == "true");
+            add_gripper_ = (it->second == "True" || it->second == "true");
         }
+        gripper_joint_name_ = prefix + "drive_joint";
         
-        if (robot_type == "lite") add_gripper = false;
-        node_->set_parameter(rclcpp::Parameter("add_gripper", add_gripper));
+        if (robot_type == "lite") add_gripper_ = false;
+        node_->set_parameter(rclcpp::Parameter("add_gripper", add_gripper_));
 
         bool add_bio_gripper = true;
         it = info_.hardware_parameters.find("add_bio_gripper");
@@ -148,7 +149,7 @@ namespace uf_robot_hardware
             velocity_control_ = (it->second == "True" || it->second == "true");
         }
         RCLCPP_INFO(LOGGER, "[%s] dof: %d, velocity_control: %d, add_gripper: %d, add_bio_gripper: %d, baud_checkset: %d, default_gripper_baud: %d", 
-            robot_ip_.c_str(), dof, velocity_control_, add_gripper, add_bio_gripper, baud_checkset, default_gripper_baud);
+            robot_ip_.c_str(), dof, velocity_control_, add_gripper_, add_bio_gripper, baud_checkset, default_gripper_baud);
         
         xarm_driver_.init(node_, robot_ip_);
     }
@@ -297,6 +298,10 @@ namespace uf_robot_hardware
 		else
 			read_code_ = xarm_driver_.arm->get_servo_angle(curr_read_position_);
         
+        bool ret;
+        if (add_gripper_)
+            ret = xarm_driver_.arm->get_gripper_position(&curr_read_gripper_position_);
+
         curr_read_time_ = node_->get_clock()->now();
         read_ready_ = read_ready_ && _xarm_is_ready_read();
         double time_sec = curr_read_time_.seconds() - start.seconds();
@@ -309,6 +314,14 @@ namespace uf_robot_hardware
         // }
         if (read_code_ == 0 && read_ready_) {
             for (int j = 0; j < info_.joints.size(); j++) {
+                if (j == 6 && add_gripper_) {
+                    if (ret != 0)
+                        continue;
+                    position_states_[j] = curr_read_gripper_position_;
+                    velocity_states_[j] = 0.0;
+                    // effort_states_[j] = 0.0;
+                    continue;
+                }
                 position_states_[j] = curr_read_position_[j];
 				if (use_new) {
 					velocity_states_[j] = curr_read_velocity_[j];

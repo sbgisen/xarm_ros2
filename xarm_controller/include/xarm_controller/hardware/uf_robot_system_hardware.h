@@ -62,6 +62,9 @@ namespace uf_robot_hardware
 
         std::string robot_ip_;
 
+        bool add_gripper_;
+        std::string gripper_joint_name_;
+
         float prev_cmds_float_[7];
 		float cmds_float_[7];
         std::vector<double> position_cmds_;
@@ -83,6 +86,7 @@ namespace uf_robot_hardware
 		float curr_read_position_[7];
 		float curr_read_velocity_[7];
 		float curr_read_effort_[7];
+        float curr_read_gripper_position_;
         
         rclcpp::Time prev_read_time_;
         rclcpp::Time curr_read_time_;
