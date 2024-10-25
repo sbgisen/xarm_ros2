@@ -62,6 +62,10 @@ namespace uf_robot_hardware
 
         std::string robot_ip_;
 
+        bool add_gripper_;
+        std::string gripper_joint_name_;
+        int max_gripper_pos_;
+
         float prev_cmds_float_[7];
 		float cmds_float_[7];
         std::vector<double> position_cmds_;
@@ -72,7 +76,6 @@ namespace uf_robot_hardware
         bool velocity_control_;
         bool initialized_;
         bool read_ready_;
-        bool reload_controller_;
 
         long int read_cnts_;
         long int read_failed_cnts_;
@@ -83,6 +86,7 @@ namespace uf_robot_hardware
 		float curr_read_position_[7];
 		float curr_read_velocity_[7];
 		float curr_read_effort_[7];
+        float curr_read_gripper_position_;
         
         rclcpp::Time prev_read_time_;
         rclcpp::Time curr_read_time_;
@@ -90,16 +94,7 @@ namespace uf_robot_hardware
         rclcpp::Time prev_write_time_;
 
         std::shared_ptr<rclcpp::Node> node_;
-        std::shared_ptr<rclcpp::Node> hw_node_;
         xarm_api::XArmDriver xarm_driver_;
-
-        std::shared_ptr<controller_manager_msgs::srv::ListControllers::Request> req_list_controller_;
-	    std::shared_ptr<controller_manager_msgs::srv::ListControllers::Response> res_list_controller_;
-        std::shared_ptr<controller_manager_msgs::srv::SwitchController::Request> req_switch_controller_;
-        std::shared_ptr<controller_manager_msgs::srv::SwitchController::Response> res_switch_controller_;
-
-        rclcpp::Client<controller_manager_msgs::srv::ListControllers>::SharedPtr client_list_controller_;
-        rclcpp::Client<controller_manager_msgs::srv::SwitchController>::SharedPtr client_switch_controller_;
 
         bool _check_cmds_is_change(float *prev, float *cur, double threshold = 0.0001);
         bool _xarm_is_ready_read(void);
@@ -108,12 +103,7 @@ namespace uf_robot_hardware
 
         bool _need_reset(void);
 
-        void _reload_controller(void);
-
         void _init_ufactory_driver(void);
-
-        template<typename ServiceT, typename SharedRequest = typename ServiceT::Request::SharedPtr, typename SharedResponse = typename ServiceT::Response::SharedPtr>
-        int _call_request(std::shared_ptr<ServiceT> client, SharedRequest req, SharedResponse& res);
 
     };
 }
