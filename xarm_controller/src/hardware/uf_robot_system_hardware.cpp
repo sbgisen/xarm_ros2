@@ -18,40 +18,12 @@ namespace uf_robot_hardware
 {
     static rclcpp::Logger LOGGER = rclcpp::get_logger("UFACTORY.RobotHW");
 
-    template<typename ServiceT, typename SharedRequest, typename SharedResponse>
-    int UFRobotSystemHardware::_call_request(std::shared_ptr<ServiceT> client, SharedRequest req, SharedResponse& res)
-    {
-        bool is_try_again = false;
-        int failed_cnts = 0;
-        while (!client->wait_for_service(std::chrono::seconds(1))) {
-            if (!rclcpp::ok()) {
-                RCLCPP_ERROR(LOGGER, "[%s] Interrupted while waiting for the service. Exiting.", robot_ip_.c_str());
-                exit(1);
-            }
-            if (!is_try_again) {
-                is_try_again = true;
-                RCLCPP_WARN(LOGGER, "[%s] service %s not available, waiting ...", robot_ip_.c_str(), client->get_service_name());
-            }
-            failed_cnts += 1;
-            if (failed_cnts >= 5) return WAIT_SERVICE_TIMEOUT;
-        }
-        auto result_future = client->async_send_request(req);
-        if (rclcpp::spin_until_future_complete(hw_node_, result_future, std::chrono::seconds(1)) != rclcpp::FutureReturnCode::SUCCESS)
-        {
-            // RCLCPP_ERROR(LOGGER, "[%s] Failed to call service %s", robot_ip_.c_str(), client->get_service_name());
-            return SERVICE_CALL_FAILED;
-        }
-        res = result_future.get();
-        return 0;
-    }
-
     void UFRobotSystemHardware::_init_ufactory_driver(void)
     {
         rclcpp::NodeOptions node_options;
         node_options.allow_undeclared_parameters(true);
         node_options.automatically_declare_parameters_from_overrides(true);
         node_ = rclcpp::Node::make_shared("ufactory_driver", node_options);
-        hw_node_ = rclcpp::Node::make_shared("ufactory_robot_hw", node_options);
 
         std::thread th([this]() -> void {
             rclcpp::spin(node_);
@@ -166,7 +138,6 @@ namespace uf_robot_hardware
         write_code_ = 0;
 
         initialized_ = false;
-        reload_controller_ = false;
 
         read_cnts_ = 0;
         read_max_time_ = 0;
@@ -253,14 +224,6 @@ namespace uf_robot_hardware
 		xarm_driver_.arm->set_mode(velocity_control_ ? XARM_MODE::VELO_JOINT : XARM_MODE::SERVO);
 		xarm_driver_.arm->set_state(XARM_STATE::START);
 
-        // req_list_controller_ = std::make_shared<controller_manager_msgs::srv::ListControllers::Request>();
-        // res_list_controller_ = std::make_shared<controller_manager_msgs::srv::ListControllers::Response>();
-        // req_switch_controller_ = std::make_shared<controller_manager_msgs::srv::SwitchController::Request>();
-        // res_switch_controller_ = std::make_shared<controller_manager_msgs::srv::SwitchController::Response>();
-
-        // client_list_controller_ = hw_node_->create_client<controller_manager_msgs::srv::ListControllers>("/controller_manager/list_controllers");
-        // client_switch_controller_ = hw_node_->create_client<controller_manager_msgs::srv::SwitchController>("/controller_manager/switch_controller");
-
         for (uint i = 0; i < position_states_.size(); i++) {
             if (std::isnan(position_states_[i])) {
                 position_states_[i] = 0;
@@ -343,9 +306,6 @@ namespace uf_robot_hardware
                     position_cmds_[i] = position_states_[i];
                     velocity_cmds_[i] = 0.0;
                 }
-                if (reload_controller_ && _check_cmds_is_change(curr_read_position_, prev_read_position_)) {
-                    // _reload_controller();
-                }
             }
             memcpy(prev_read_position_, curr_read_position_, sizeof(float) * 7);
             prev_read_time_ = curr_read_time_;
@@ -369,7 +329,6 @@ namespace uf_robot_hardware
     hardware_interface::return_type UFRobotSystemHardware::write(const rclcpp::Time & time, const rclcpp::Duration &period)
     {
         if (_need_reset()) {
-            if (initialized_) reload_controller_ = true;
             initialized_ = false;
             return hardware_interface::return_type::OK;
         }
@@ -419,23 +378,6 @@ namespace uf_robot_hardware
         }
 
         return hardware_interface::return_type::OK;
-    }
-
-    void UFRobotSystemHardware::_reload_controller(void) {
-        int ret = _call_request(client_list_controller_, req_list_controller_, res_list_controller_);
-        if (ret == 0 && res_list_controller_->controller.size() > 0) {
-            req_switch_controller_->activate_controllers.resize(res_list_controller_->controller.size());
-            req_switch_controller_->deactivate_controllers.resize(res_list_controller_->controller.size());
-            for (uint i = 0; i < res_list_controller_->controller.size(); i++) {
-                req_switch_controller_->activate_controllers[i] = res_list_controller_->controller[i].name;
-                req_switch_controller_->deactivate_controllers[i] = res_list_controller_->controller[i].name;
-            }
-            req_switch_controller_->strictness = controller_manager_msgs::srv::SwitchController::Request::BEST_EFFORT;
-            _call_request(client_switch_controller_, req_switch_controller_, res_switch_controller_);
-        }
-        if (ret == 0) {
-            reload_controller_ = false;
-        }
     }
 
     bool UFRobotSystemHardware::_check_cmds_is_change(float *prev, float *cur, double threshold)
