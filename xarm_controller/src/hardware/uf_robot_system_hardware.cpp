@@ -312,13 +312,7 @@ namespace uf_robot_hardware
 				    // effort_states_[j] = 0.0;
 				    continue;
 				}
-				auto pos = curr_read_position_[j];
-				if (pos < max_pos + clamp_tolerance_) {
-				    pos = max_pos;
-				} else if (pos > min_pos - clamp_tolerance_) {
-				    pos = min_pos;
-				}
-				position_states_[j] = pos;
+				position_states_[j] = curr_read_position_[j];
 				if (use_new) {
 					velocity_states_[j] = curr_read_velocity_[j];
 					// effort_states_[j] = curr_read_effort_[j];
