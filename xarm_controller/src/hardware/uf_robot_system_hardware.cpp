@@ -7,6 +7,7 @@
  ============================================================================*/
 
 #include "xarm_controller/hardware/uf_robot_system_hardware.h"
+#include <hardware_interface/types/hardware_interface_type_values.hpp>
 
 #define SERVICE_CALL_FAILED 999
 #define SERVICE_IS_PERSISTENT_BUT_INVALID 998
@@ -125,6 +126,12 @@ namespace uf_robot_hardware
             robot_ip_.c_str(), dof, velocity_control_, add_gripper_, add_bio_gripper, baud_checkset, default_gripper_baud);
         
         xarm_driver_.init(node_, robot_ip_);
+
+        clamp_tolerance_ = 0.01; // rad
+        it = info_.hardware_parameters.find("clamp_tolerance");
+        if (it != info_.hardware_parameters.end()) {
+            clamp_tolerance_ = atof(it->second.c_str());
+        }
     }
 
     CallbackReturn UFRobotSystemHardware::on_init(const hardware_interface::HardwareInfo& info)
@@ -283,15 +290,35 @@ namespace uf_robot_hardware
         // }
         if (read_code_ == 0 && read_ready_) {
             for (int j = 0; j < info_.joints.size(); j++) {
-                if (info_.joints[j].name == gripper_joint_name_) {
-                    if (ret != 0)
-                        continue;
-                    position_states_[j] = fabs(max_gripper_pos_ - curr_read_gripper_position_) / 1000;
-                    velocity_states_[j] = 0.0;
-                    // effort_states_[j] = 0.0;
-                    continue;
-                }
-                position_states_[j] = curr_read_position_[j];
+				float max_pos, min_pos;
+				for (int k = 0; k < info_.joints[j].state_interfaces.size(); k++) {
+				    if (info_.joints[j].state_interfaces[k].name == hardware_interface::HW_IF_POSITION) {
+				        max_pos = atof(info_.joints[j].state_interfaces[k].max.c_str());
+				        min_pos = atof(info_.joints[j].state_interfaces[k].min.c_str());
+				        break;
+				    }
+				}
+				if (info_.joints[j].name == gripper_joint_name_) {
+				    if (ret != 0)
+				        continue;
+				    auto pos = fabs(max_gripper_pos_ - curr_read_gripper_position_) / 1000;
+				    if (pos < max_pos + clamp_tolerance_) {
+				        pos = max_pos;
+				    } else if (pos > min_pos - clamp_tolerance_) {
+				        pos = min_pos;
+				    }
+				    position_states_[j] = pos;
+				    velocity_states_[j] = 0.0;
+				    // effort_states_[j] = 0.0;
+				    continue;
+				}
+				auto pos = curr_read_position_[j];
+				if (pos < max_pos + clamp_tolerance_) {
+				    pos = max_pos;
+				} else if (pos > min_pos - clamp_tolerance_) {
+				    pos = min_pos;
+				}
+				position_states_[j] = pos;
 				if (use_new) {
 					velocity_states_[j] = curr_read_velocity_[j];
 					// effort_states_[j] = curr_read_effort_[j];

@@ -76,6 +76,7 @@ namespace uf_robot_hardware
         bool velocity_control_;
         bool initialized_;
         bool read_ready_;
+        float clamp_tolerance_;
 
         long int read_cnts_;
         long int read_failed_cnts_;
