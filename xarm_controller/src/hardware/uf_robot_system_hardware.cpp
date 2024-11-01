@@ -283,15 +283,15 @@ namespace uf_robot_hardware
         // }
         if (read_code_ == 0 && read_ready_) {
             for (int j = 0; j < info_.joints.size(); j++) {
-                if (info_.joints[j].name == gripper_joint_name_) {
-                    if (ret != 0)
-                        continue;
-                    position_states_[j] = fabs(max_gripper_pos_ - curr_read_gripper_position_) / 1000;
-                    velocity_states_[j] = 0.0;
-                    // effort_states_[j] = 0.0;
-                    continue;
-                }
-                position_states_[j] = curr_read_position_[j];
+				if (info_.joints[j].name == gripper_joint_name_) {
+				    if (ret != 0)
+				        continue;
+				    position_states_[j] = std::clamp(fabs(max_gripper_pos_ - curr_read_gripper_position_) / 1000, 0.0, max_gripper_pos_ / 1000.0);
+				    velocity_states_[j] = 0.0;
+				    // effort_states_[j] = 0.0;
+				    continue;
+				}
+				position_states_[j] = curr_read_position_[j];
 				if (use_new) {
 					velocity_states_[j] = curr_read_velocity_[j];
 					// effort_states_[j] = curr_read_effort_[j];
