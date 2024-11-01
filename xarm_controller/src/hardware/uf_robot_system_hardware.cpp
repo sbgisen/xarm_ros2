@@ -286,7 +286,7 @@ namespace uf_robot_hardware
 				if (info_.joints[j].name == gripper_joint_name_) {
 				    if (ret != 0)
 				        continue;
-				    position_states_[j] = std::clamp(fabs(max_gripper_pos_ - curr_read_gripper_position_) / 1000, 0.0, 0.85);
+				    position_states_[j] = std::clamp(fabs(max_gripper_pos_ - curr_read_gripper_position_) / 1000, 0.0, max_gripper_pos_ / 1000.0);
 				    velocity_states_[j] = 0.0;
 				    // effort_states_[j] = 0.0;
 				    continue;
