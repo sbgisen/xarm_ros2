@@ -20,9 +20,9 @@
 
     <xacro:xarm_gripper_gazebo prefix="${prefix}" />
 
-    <xacro:if value="${not is_ros2}">
-      <xacro:xarm_gazebo_grasp_fix prefix="${prefix}" palm_link="${prefix}link${dof}" />
-    </xacro:if>
+    <!--<xacro:if value="${not is_ros2}">-->
+    <!--  <xacro:xarm_gazebo_grasp_fix prefix="${prefix}" palm_link="${prefix}link${dof}" />-->
+    <!--</xacro:if>-->
 
     <!-- mimic_joint_plugin has to be installed: -->
     <!--<xacro:mimic_joint_plugin_gazebo name_prefix="${prefix}left_finger_joint"-->
