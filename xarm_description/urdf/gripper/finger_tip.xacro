@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-  <xacro:macro name="finger_extension" params="name parent *origin collide_without_contact:='false'">
+  <xacro:macro name="finger_tip" params="name parent *origin collide_without_contact:='false'">
 
     <xacro:macro name="box_inertial" params="mass origin d w h">
       <inertial>
@@ -9,12 +9,12 @@
         <inertia ixx="${mass * (w ** 2 + h ** 2) / 12}" ixy="0.0" iyy="${mass * (d ** 2 + h ** 2) / 12}" ixz="0.0" iyz="0.0" izz="${mass * (w ** 2 + d ** 2) / 12}"/>
       </inertial>
     </xacro:macro>
-    <joint name="${name}_finger_extension_joint" type="fixed">
+    <joint name="${name}_finger_tip_joint" type="fixed">
       <xacro:insert_block name="origin"/>
       <parent link="${parent}"/>
-      <child link="${name}_finger_extension_link"/>
+      <child link="${name}_finger_tip_link"/>
     </joint>
-    <link name="${name}_finger_extension_link">
+    <link name="${name}_finger_tip_link">
       <visual>
         <origin xyz="0 0 0.004" rpy="0 0 0"/>
         <geometry>
@@ -32,7 +32,7 @@
       </collision>
       <xacro:box_inertial mass="0.019" origin="0 0 0" d="0.040" w="0.032" h="0.007"/>
     </link>
-    <gazebo reference="${name}_finger_extension_link">
+    <gazebo reference="${name}_finger_tip_link">
       <kp>100000.0</kp>
       <kd>100.0</kd>
       <mu1>1e9</mu1>

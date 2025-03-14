@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="xarm_gripper">
 
-  <xacro:macro name="xarm_gripper_urdf" params="prefix:='' attach_to:='' attach_xyz:='0 0 0' attach_rpy:='0 0 0' use_default_finger_extension:='true' ">
+  <xacro:macro name="xarm_gripper_urdf" params="prefix:='' attach_to:='' attach_xyz:='0 0 0' attach_rpy:='0 0 0' use_default_finger_tip:='true' ">
 
     <xacro:unless value="${attach_to == ''}">
       <joint name="${prefix}gripper_fix" type="fixed">
@@ -219,14 +219,14 @@
       <child link="${prefix}link_tcp" />
     </joint>
 
-    <xacro:if value="${use_default_finger_extension}">
-      <xacro:include filename="$(find xarm_description)/urdf/gripper/finger_extension.xacro"/>
-      <xacro:finger_extension name="${prefix}left" parent="${prefix}left_finger">
+    <xacro:if value="${use_default_finger_tip}">
+      <xacro:include filename="$(find xarm_description)/urdf/gripper/finger_tip.xacro"/>
+      <xacro:finger_tip name="${prefix}left" parent="${prefix}left_finger">
         <origin rpy="0 0 0" xyz="0 -0.0225 0.037"/>
-      </xacro:finger_extension>
-      <xacro:finger_extension name="${prefix}right" parent="${prefix}right_finger">
+      </xacro:finger_tip>
+      <xacro:finger_tip name="${prefix}right" parent="${prefix}right_finger">
         <origin rpy="0 0 0" xyz="0 0.0225 0.037"/>
-      </xacro:finger_extension>
+      </xacro:finger_tip>
     </xacro:if>
 
   </xacro:macro>
