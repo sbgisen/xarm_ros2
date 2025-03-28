@@ -278,15 +278,14 @@ namespace xarm_api
             }
         }
 
-        xarm_gripper_action_server_ = rclcpp_action::create_server<control_msgs::action::ParallelGripperCommand>(
-            node_, prefix + "xarm_gripper/gripper_action",
-            BIND_CLS_CB(&XArmDriver::_handle_xarm_gripper_action_goal),
-            BIND_CLS_CB_1(&XArmDriver::_handle_xarm_gripper_action_cancel),
-            BIND_CLS_CB_1(&XArmDriver::_handle_xarm_gripper_action_accepted));
-        
         bool add_gripper;
         node_->get_parameter_or("add_gripper", add_gripper, false);
         if (add_gripper) {
+            xarm_gripper_action_server_ = rclcpp_action::create_server<control_msgs::action::ParallelGripperCommand>(
+                node_, prefix + "xarm_gripper/gripper_action",
+                BIND_CLS_CB(&XArmDriver::_handle_xarm_gripper_action_goal),
+                BIND_CLS_CB_1(&XArmDriver::_handle_xarm_gripper_action_cancel),
+                BIND_CLS_CB_1(&XArmDriver::_handle_xarm_gripper_action_accepted));
             xarm_gripper_init_loop_ = false;
             std::thread([this]() {
                 float cur_pos;
@@ -519,15 +518,14 @@ namespace xarm_api
             }
         }
 
-        bio_gripper_action_server_ = rclcpp_action::create_server<control_msgs::action::ParallelGripperCommand>(
-            node_, prefix + "bio_gripper/gripper_action",
-            BIND_CLS_CB(&XArmDriver::_handle_bio_gripper_action_goal),
-            BIND_CLS_CB_1(&XArmDriver::_handle_bio_gripper_action_cancel),
-            BIND_CLS_CB_1(&XArmDriver::_handle_bio_gripper_action_accepted));
-        
         bool add_bio_gripper;
         node_->get_parameter_or("add_bio_gripper", add_bio_gripper, false);
         if (add_bio_gripper) {
+            bio_gripper_action_server_ = rclcpp_action::create_server<control_msgs::action::ParallelGripperCommand>(
+                node_, prefix + "bio_gripper/gripper_action",
+                BIND_CLS_CB(&XArmDriver::_handle_bio_gripper_action_goal),
+                BIND_CLS_CB_1(&XArmDriver::_handle_bio_gripper_action_cancel),
+                BIND_CLS_CB_1(&XArmDriver::_handle_bio_gripper_action_accepted));
             bio_gripper_init_loop_ = false;
             std::thread([this]() {
                 float cur_pos;
