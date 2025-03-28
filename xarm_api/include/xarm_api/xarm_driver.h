@@ -14,7 +14,7 @@
 #include <std_msgs/msg/float32.hpp>
 #include <sensor_msgs/msg/joint_state.hpp>
 #include <geometry_msgs/msg/wrench_stamped.hpp>
-#include <control_msgs/action/gripper_command.hpp>
+#include <control_msgs/action/parallel_gripper_command.hpp>
 
 #include "xarm_msgs.h"
 #include "xarm/wrapper/xarm_api.h"
@@ -46,18 +46,18 @@ namespace xarm_api
 
         void _init_xarm_gripper(void);
         inline float _xarm_gripper_pos_convert(float pos, bool reversed = false);
-        rclcpp_action::GoalResponse _handle_xarm_gripper_action_goal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const control_msgs::action::GripperCommand::Goal> goal);
-        rclcpp_action::CancelResponse _handle_xarm_gripper_action_cancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<control_msgs::action::GripperCommand>> goal_handle);
-        void _handle_xarm_gripper_action_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<control_msgs::action::GripperCommand>> goal_handle);
-        void _xarm_gripper_action_execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<control_msgs::action::GripperCommand>> goal_handle);
+        rclcpp_action::GoalResponse _handle_xarm_gripper_action_goal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const control_msgs::action::ParallelGripperCommand::Goal> goal);
+        rclcpp_action::CancelResponse _handle_xarm_gripper_action_cancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<control_msgs::action::ParallelGripperCommand>> goal_handle);
+        void _handle_xarm_gripper_action_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<control_msgs::action::ParallelGripperCommand>> goal_handle);
+        void _xarm_gripper_action_execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<control_msgs::action::ParallelGripperCommand>> goal_handle);
         void _pub_xarm_gripper_joint_states(float pos);
 
         void _init_bio_gripper(void);
         inline float _bio_gripper_pos_convert(float pos, bool reversed = false);
-        rclcpp_action::GoalResponse _handle_bio_gripper_action_goal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const control_msgs::action::GripperCommand::Goal> goal);
-        rclcpp_action::CancelResponse _handle_bio_gripper_action_cancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<control_msgs::action::GripperCommand>> goal_handle);
-        void _handle_bio_gripper_action_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<control_msgs::action::GripperCommand>> goal_handle);
-        void _bio_gripper_action_execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<control_msgs::action::GripperCommand>> goal_handle);
+        rclcpp_action::GoalResponse _handle_bio_gripper_action_goal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const control_msgs::action::ParallelGripperCommand::Goal> goal);
+        rclcpp_action::CancelResponse _handle_bio_gripper_action_cancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<control_msgs::action::ParallelGripperCommand>> goal_handle);
+        void _handle_bio_gripper_action_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<control_msgs::action::ParallelGripperCommand>> goal_handle);
+        void _bio_gripper_action_execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<control_msgs::action::ParallelGripperCommand>> goal_handle);
         void _pub_bio_gripper_joint_states(float pos);
 
         template<typename ServiceT, typename CallbackT>
@@ -100,9 +100,9 @@ namespace xarm_api
         int xarm_gripper_threshold_;
         int xarm_gripper_threshold_times_;
         sensor_msgs::msg::JointState xarm_gripper_joint_state_msg_;
-        control_msgs::action::GripperCommand::Feedback::SharedPtr xarm_gripper_feedback_;
-        control_msgs::action::GripperCommand::Result::SharedPtr xarm_gripper_result_;
-        rclcpp_action::Server<control_msgs::action::GripperCommand>::SharedPtr xarm_gripper_action_server_;
+        control_msgs::action::ParallelGripperCommand::Feedback::SharedPtr xarm_gripper_feedback_;
+        control_msgs::action::ParallelGripperCommand::Result::SharedPtr xarm_gripper_result_;
+        rclcpp_action::Server<control_msgs::action::ParallelGripperCommand>::SharedPtr xarm_gripper_action_server_;
 
         bool bio_gripper_init_loop_;
         int bio_gripper_speed_;
@@ -112,9 +112,9 @@ namespace xarm_api
         int bio_gripper_threshold_;
         int bio_gripper_threshold_times_;
         sensor_msgs::msg::JointState bio_gripper_joint_state_msg_;
-        control_msgs::action::GripperCommand::Feedback::SharedPtr bio_gripper_feedback_;
-        control_msgs::action::GripperCommand::Result::SharedPtr bio_gripper_result_;
-        rclcpp_action::Server<control_msgs::action::GripperCommand>::SharedPtr bio_gripper_action_server_;
+        control_msgs::action::ParallelGripperCommand::Feedback::SharedPtr bio_gripper_feedback_;
+        control_msgs::action::ParallelGripperCommand::Result::SharedPtr bio_gripper_result_;
+        rclcpp_action::Server<control_msgs::action::ParallelGripperCommand>::SharedPtr bio_gripper_action_server_;
     
     private:
         bool service_debug_;
