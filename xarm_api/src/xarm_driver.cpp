@@ -322,7 +322,14 @@ namespace xarm_api
     rclcpp_action::GoalResponse XArmDriver::_handle_xarm_gripper_action_goal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const control_msgs::action::ParallelGripperCommand::Goal> goal)
     {
         // RCLCPP_INFO(node_->get_logger(), "Received gripper move goal request, target_pulse=%f, pulse_speed=%f", goal->target_pulse, goal->pulse_speed);
-        RCLCPP_INFO(node_->get_logger(), "Received gripper move goal request, position=%f", goal->command.position[0]);
+        auto joint_name = xarm_gripper_joint_state_msg_.name[0];
+        auto index = std::find(goal->command.name.begin(), goal->command.name.end(), joint_name);
+        if (index == goal->command.name.end()) {
+            RCLCPP_ERROR(node_->get_logger(), "Gripper joint name not found in goal command");
+            return rclcpp_action::GoalResponse::REJECT;
+        }
+        auto position_index = std::distance(goal->command.name.begin(), index);
+        RCLCPP_INFO(node_->get_logger(), "Received gripper move goal request, position=%f", goal->command.position[position_index]);
         (void)uuid;
         return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
     }
@@ -344,8 +351,15 @@ namespace xarm_api
     {
         xarm_gripper_init_loop_ = true;
         const auto goal = goal_handle->get_goal();
-        RCLCPP_INFO(node_->get_logger(), "gripper_action_execute, position=%f", goal->command.position[0]);
-        
+        auto joint_name = xarm_gripper_joint_state_msg_.name[0];
+        auto index = std::find(goal->command.name.begin(), goal->command.name.end(), joint_name);
+        if (index == goal->command.name.end()) {
+            RCLCPP_ERROR(node_->get_logger(), "Gripper joint name not found in goal command");
+            return;
+        }
+        auto position_index = std::distance(goal->command.name.begin(), index);
+        RCLCPP_INFO(node_->get_logger(), "gripper_action_execute, position=%f", goal->command.position[position_index]);
+
         int ret;
         float cur_pos = 0;
         int err = 0;
@@ -411,7 +425,7 @@ namespace xarm_api
             return;
         }
         float last_pos = -xarm_gripper_max_pos_;
-        float target_pos = _xarm_gripper_pos_convert(goal->command.position[0], true);
+        float target_pos = _xarm_gripper_pos_convert(goal->command.position[position_index], true);
         bool is_move = true;
         std::thread([this, &target_pos, &is_move, &cur_pos]() {
             is_move = true;
@@ -560,8 +574,15 @@ namespace xarm_api
 
     rclcpp_action::GoalResponse XArmDriver::_handle_bio_gripper_action_goal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const control_msgs::action::ParallelGripperCommand::Goal> goal)
     {
-        // RCLCPP_INFO(node_->get_logger(), "Received gripper move goal request, target_pulse=%f, pulse_speed=%f", goal->target_pulse, goal->pulse_speed);
-        RCLCPP_INFO(node_->get_logger(), "Received bio gripper move goal request, position=%f", goal->command.position[0]);
+        // RCLCPP_INFO(node_->get_logger(), "Received gripper move goal request, target_pulse=%f, pulse_speed=%f", goal->target_pulse, goal->pulse_speed);position_index
+        auto joint_name = xarm_gripper_joint_state_msg_.name[0];
+        auto index = std::find(goal->command.name.begin(), goal->command.name.end(), joint_name);
+        if (index == goal->command.name.end()) {
+            RCLCPP_ERROR(node_->get_logger(), "Gripper joint name not found in goal command");
+            return rclcpp_action::GoalResponse::REJECT;
+        }
+        auto position_index = std::distance(goal->command.name.begin(), index);
+        RCLCPP_INFO(node_->get_logger(), "Received bio gripper move goal request, position=%f", goal->command.position[position_index]);
         (void)uuid;
         return rclcpp_action::GoalResponse::ACCEPT_AND_EXECUTE;
     }
@@ -583,7 +604,14 @@ namespace xarm_api
     {
         bio_gripper_init_loop_ = true;
         const auto goal = goal_handle->get_goal();
-        RCLCPP_INFO(node_->get_logger(), "bio_gripper_action_execute, position=%f", goal->command.position[0]);
+        auto joint_name = bio_gripper_joint_state_msg_.name[0];
+        auto index = std::find(goal->command.name.begin(), goal->command.name.end(), joint_name);
+        if (index == goal->command.name.end()) {
+            RCLCPP_ERROR(node_->get_logger(), "Gripper joint name not found in goal command");
+            return;
+        }
+        auto position_index = std::distance(goal->command.name.begin(), index);
+        RCLCPP_INFO(node_->get_logger(), "bio_gripper_action_execute, position=%f", goal->command.position[position_index]);
         
         int ret;
         float cur_pos = 0;
