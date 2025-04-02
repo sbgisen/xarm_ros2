@@ -575,7 +575,7 @@ namespace xarm_api
     rclcpp_action::GoalResponse XArmDriver::_handle_bio_gripper_action_goal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const control_msgs::action::ParallelGripperCommand::Goal> goal)
     {
         // RCLCPP_INFO(node_->get_logger(), "Received gripper move goal request, target_pulse=%f, pulse_speed=%f", goal->target_pulse, goal->pulse_speed);position_index
-        auto joint_name = xarm_gripper_joint_state_msg_.name[0];
+        auto joint_name = bio_gripper_joint_state_msg_.name[0];
         auto index = std::find(goal->command.name.begin(), goal->command.name.end(), joint_name);
         if (index == goal->command.name.end()) {
             RCLCPP_ERROR(node_->get_logger(), "Gripper joint name not found in goal command");
@@ -635,11 +635,11 @@ namespace xarm_api
 
         ret = arm->set_bio_gripper_enable(true);
         if (ret != 0) {
-            xarm_gripper_joint_state_msg_.header.stamp = node_->get_clock()->now();
-            for (int i = 0; i < xarm_gripper_joint_state_msg_.position.size(); i++) {
-                xarm_gripper_joint_state_msg_.position[i] = _bio_gripper_pos_convert(cur_pos);
+            bio_gripper_joint_state_msg_.header.stamp = node_->get_clock()->now();
+            for (int i = 0; i < bio_gripper_joint_state_msg_.position.size(); i++) {
+                bio_gripper_joint_state_msg_.position[i] = _bio_gripper_pos_convert(cur_pos);
             }
-            bio_gripper_result_->state = xarm_gripper_joint_state_msg_;
+            bio_gripper_result_->state = bio_gripper_joint_state_msg_;
             try {
                 goal_handle->canceled(bio_gripper_result_);
             } catch (std::exception &e) {
@@ -651,11 +651,11 @@ namespace xarm_api
         }
         ret = arm->set_bio_gripper_speed(bio_gripper_speed_);
         if (ret != 0) {
-            xarm_gripper_joint_state_msg_.header.stamp = node_->get_clock()->now();
-            for (int i = 0; i < xarm_gripper_joint_state_msg_.position.size(); i++) {
-                xarm_gripper_joint_state_msg_.position[i] = _bio_gripper_pos_convert(cur_pos);
+            bio_gripper_joint_state_msg_.header.stamp = node_->get_clock()->now();
+            for (int i = 0; i < bio_gripper_joint_state_msg_.position.size(); i++) {
+                bio_gripper_joint_state_msg_.position[i] = _bio_gripper_pos_convert(cur_pos);
             }
-            bio_gripper_result_->state = xarm_gripper_joint_state_msg_;
+            bio_gripper_result_->state = bio_gripper_joint_state_msg_;
             try {
                 goal_handle->canceled(bio_gripper_result_);
             } catch (std::exception &e) {
@@ -692,11 +692,11 @@ namespace xarm_api
                     if (fabs(last_pos - cur_pos) < bio_gripper_threshold_) {
                         cnt += 1;
                         if (cnt >= bio_gripper_threshold_times_ && fabs(target_pos - cur_pos) < 15) {
-                            xarm_gripper_joint_state_msg_.header.stamp = node_->get_clock()->now();
-                            for (int i = 0; i < xarm_gripper_joint_state_msg_.position.size(); i++) {
-                                xarm_gripper_joint_state_msg_.position[i] = _bio_gripper_pos_convert(cur_pos);
+                            bio_gripper_joint_state_msg_.header.stamp = node_->get_clock()->now();
+                            for (int i = 0; i < bio_gripper_joint_state_msg_.position.size(); i++) {
+                                bio_gripper_joint_state_msg_.position[i] = _bio_gripper_pos_convert(cur_pos);
                             }
-                            bio_gripper_result_->state = xarm_gripper_joint_state_msg_;
+                            bio_gripper_result_->state = bio_gripper_joint_state_msg_;
                             try {
                                 goal_handle->succeed(bio_gripper_result_);
                             } catch (std::exception &e) {
@@ -710,11 +710,11 @@ namespace xarm_api
                         last_pos = cur_pos;
                     }
                 }
-                xarm_gripper_joint_state_msg_.header.stamp = node_->get_clock()->now();
-                for (int i = 0; i < xarm_gripper_joint_state_msg_.position.size(); i++) {
-                    xarm_gripper_joint_state_msg_.position[i] = _bio_gripper_pos_convert(cur_pos);
+                bio_gripper_joint_state_msg_.header.stamp = node_->get_clock()->now();
+                for (int i = 0; i < bio_gripper_joint_state_msg_.position.size(); i++) {
+                    bio_gripper_joint_state_msg_.position[i] = _bio_gripper_pos_convert(cur_pos);
                 }
-                bio_gripper_feedback_->state = xarm_gripper_joint_state_msg_;
+                bio_gripper_feedback_->state = bio_gripper_joint_state_msg_;
                 try {
                     goal_handle->publish_feedback(bio_gripper_feedback_);
                 } catch (std::exception &e) {
@@ -732,11 +732,11 @@ namespace xarm_api
         arm->get_bio_gripper_position(&cur_pos);
         RCLCPP_INFO(node_->get_logger(), "bio move finish, cur_pos=%f", cur_pos);
         if (rclcpp::ok() && !is_succeed) {
-            xarm_gripper_joint_state_msg_.header.stamp = node_->get_clock()->now();
-            for (int i = 0; i < xarm_gripper_joint_state_msg_.position.size(); i++) {
-                xarm_gripper_joint_state_msg_.position[i] = _bio_gripper_pos_convert(cur_pos);
+            bio_gripper_joint_state_msg_.header.stamp = node_->get_clock()->now();
+            for (int i = 0; i < bio_gripper_joint_state_msg_.position.size(); i++) {
+                bio_gripper_joint_state_msg_.position[i] = _bio_gripper_pos_convert(cur_pos);
             }
-            bio_gripper_result_->state = xarm_gripper_joint_state_msg_;
+            bio_gripper_result_->state = bio_gripper_joint_state_msg_;
             try {
                 goal_handle->succeed(bio_gripper_result_);
             } catch (std::exception &e) {
