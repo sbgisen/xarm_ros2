@@ -378,10 +378,6 @@ namespace xarm_api
 
         ret = arm->set_gripper_mode(0);
         if (ret != 0) {
-            xarm_gripper_joint_state_msg_.header.stamp = node_->get_clock()->now();
-            for (int i = 0; i < xarm_gripper_joint_state_msg_.position.size(); i++) {
-                xarm_gripper_joint_state_msg_.position[i] = _xarm_gripper_pos_convert(cur_pos);
-            }
             xarm_gripper_result_->state = xarm_gripper_joint_state_msg_;
             try {
                 goal_handle->canceled(xarm_gripper_result_);
@@ -394,10 +390,6 @@ namespace xarm_api
         }
         ret = arm->set_gripper_enable(true);
         if (ret != 0) {
-            xarm_gripper_joint_state_msg_.header.stamp = node_->get_clock()->now();
-            for (int i = 0; i < xarm_gripper_joint_state_msg_.position.size(); i++) {
-                xarm_gripper_joint_state_msg_.position[i] = _xarm_gripper_pos_convert(cur_pos);
-            }
             xarm_gripper_result_->state = xarm_gripper_joint_state_msg_;
             try {
                 goal_handle->canceled(xarm_gripper_result_);
@@ -410,10 +402,6 @@ namespace xarm_api
         }
         ret = arm->set_gripper_speed(xarm_gripper_speed_);
         if (ret != 0) {
-            xarm_gripper_joint_state_msg_.header.stamp = node_->get_clock()->now();
-            for (int i = 0; i < xarm_gripper_joint_state_msg_.position.size(); i++) {
-                xarm_gripper_joint_state_msg_.position[i] = _xarm_gripper_pos_convert(cur_pos);
-            }
             xarm_gripper_result_->state = xarm_gripper_joint_state_msg_;
             try {
                 goal_handle->canceled(xarm_gripper_result_);
@@ -635,10 +623,6 @@ namespace xarm_api
 
         ret = arm->set_bio_gripper_enable(true);
         if (ret != 0) {
-            bio_gripper_joint_state_msg_.header.stamp = node_->get_clock()->now();
-            for (int i = 0; i < bio_gripper_joint_state_msg_.position.size(); i++) {
-                bio_gripper_joint_state_msg_.position[i] = _bio_gripper_pos_convert(cur_pos);
-            }
             bio_gripper_result_->state = bio_gripper_joint_state_msg_;
             try {
                 goal_handle->canceled(bio_gripper_result_);
@@ -651,10 +635,6 @@ namespace xarm_api
         }
         ret = arm->set_bio_gripper_speed(bio_gripper_speed_);
         if (ret != 0) {
-            bio_gripper_joint_state_msg_.header.stamp = node_->get_clock()->now();
-            for (int i = 0; i < bio_gripper_joint_state_msg_.position.size(); i++) {
-                bio_gripper_joint_state_msg_.position[i] = _bio_gripper_pos_convert(cur_pos);
-            }
             bio_gripper_result_->state = bio_gripper_joint_state_msg_;
             try {
                 goal_handle->canceled(bio_gripper_result_);
