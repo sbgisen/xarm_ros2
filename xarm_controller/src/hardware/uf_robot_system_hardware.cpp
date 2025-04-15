@@ -269,17 +269,25 @@ namespace uf_robot_hardware
         for (uint i = 0; i < position_states_.size(); i++) {
             if (std::isnan(position_states_[i])) {
                 position_states_[i] = 0;
-                position_cmds_[i] = 0;
+                if (i < position_cmds_.size()) {
+                    position_cmds_[i] = 0;
+                }
             } else {
-                position_cmds_[i] = position_states_[i];
+                if (i < position_cmds_.size()) {
+                    position_cmds_[i] = position_states_[i];
+                }
             }
         }
         for (uint i = 0; i < velocity_states_.size(); i++) {
             if (std::isnan(velocity_states_[i])) {
                 velocity_states_[i] = 0;
-                velocity_cmds_[i] = 0;
+                if (i < velocity_cmds_.size()) {
+                    velocity_cmds_[i] = 0;
+                }
             } else {
-                velocity_cmds_[i] = velocity_states_[i];
+                if (i < velocity_cmds_.size()) {
+                    velocity_cmds_[i] = velocity_states_[i];
+                }
             }
         }
         
@@ -357,6 +365,9 @@ namespace uf_robot_hardware
 
             if (!initialized_) {
                 for (uint i = 0; i < position_states_.size(); i++) {
+                    if (i >= position_cmds_.size() || i >= velocity_cmds_.size()) {
+                        break;
+                    }
                     position_cmds_[i] = position_states_[i];
                     velocity_cmds_[i] = 0.0;
                 }
