@@ -272,29 +272,20 @@ namespace uf_robot_hardware
         client_list_controller_ = hw_node_->create_client<controller_manager_msgs::srv::ListControllers>("/controller_manager/list_controllers");
         client_switch_controller_ = hw_node_->create_client<controller_manager_msgs::srv::SwitchController>("/controller_manager/switch_controller");
 
-        for (uint i = 0; i < position_states_.size(); i++) {
+        for (uint i = 0; i < info_.joints.size(); i++) {
             if (std::isnan(position_states_[i])) {
                 position_states_[i] = 0;
-                if (i < position_cmds_.size()) {
-                    position_cmds_[i] = 0;
-                }
-            } else {
-                if (i < position_cmds_.size()) {
-                    position_cmds_[i] = position_states_[i];
-                }
             }
-        }
-        for (uint i = 0; i < velocity_states_.size(); i++) {
             if (std::isnan(velocity_states_[i])) {
                 velocity_states_[i] = 0;
-                if (i < velocity_cmds_.size()) {
-                    velocity_cmds_[i] = 0;
-                }
-            } else {
-                if (i < velocity_cmds_.size()) {
-                    velocity_cmds_[i] = velocity_states_[i];
-                }
             }
+            if (info_.joints[i].name == gripper_joint_name_) {
+                xarm_gripper_cmd_ = position_states_[i];
+                prev_xarm_gripper_cmd_ = xarm_gripper_cmd_;
+                continue;
+            }
+            position_cmds_[i] = position_states_[i];
+            velocity_cmds_[i] = velocity_states_[i];
         }
         
         RCLCPP_INFO(LOGGER, "[%s] System Sucessfully started!", robot_ip_.c_str());
@@ -453,7 +444,7 @@ namespace uf_robot_hardware
             }
         }
         if (add_gripper_) {
-            if (xarm_gripper_cmd_ != prev_xarm_gripper_cmd_){
+            if (std::fabs(xarm_gripper_cmd_ - prev_xarm_gripper_cmd_) > 0.0001) {
                 xarm_driver_.send_gripper_command(xarm_gripper_cmd_);
                 prev_xarm_gripper_cmd_ = xarm_gripper_cmd_;
             }
