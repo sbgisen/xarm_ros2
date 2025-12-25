@@ -7,6 +7,7 @@
  ============================================================================*/
 
 #include "xarm_controller/hardware/uf_robot_system_hardware.h"
+#include <limits>
 
 #define SERVICE_CALL_FAILED 999
 #define SERVICE_IS_PERSISTENT_BUT_INVALID 998
@@ -189,6 +190,8 @@ namespace uf_robot_hardware
             size -= 1;
         position_cmds_.resize(size, std::numeric_limits<double>::quiet_NaN());
         velocity_cmds_.resize(size, std::numeric_limits<double>::quiet_NaN());
+        prev_xarm_gripper_cmd_ = std::numeric_limits<double>::quiet_NaN();
+        xarm_gripper_cmd_ = std::numeric_limits<double>::quiet_NaN();
 
         for (const hardware_interface::ComponentInfo & joint : info_.joints) {
             bool has_pos_cmd_interface = false;
@@ -241,8 +244,11 @@ namespace uf_robot_hardware
     {
         std::vector<hardware_interface::CommandInterface> command_interfaces;
         for (uint i = 0; i < info_.joints.size(); i++) {
-            if (info_.joints[i].name == gripper_joint_name_)
+            if (info_.joints[i].name == gripper_joint_name_){
+                command_interfaces.emplace_back(hardware_interface::CommandInterface(
+                    info_.joints[i].name, hardware_interface::HW_IF_POSITION, &xarm_gripper_cmd_));
                 continue;
+            }
             command_interfaces.emplace_back(hardware_interface::CommandInterface(
                 info_.joints[i].name, hardware_interface::HW_IF_POSITION, &position_cmds_[i]));
             command_interfaces.emplace_back(hardware_interface::CommandInterface(
@@ -444,6 +450,12 @@ namespace uf_robot_hardware
                         prev_cmds_float_[i] = (float)cmds_float_[i];
                     }
                 }
+            }
+        }
+        if (add_gripper_) {
+            if (xarm_gripper_cmd_ != prev_xarm_gripper_cmd_){
+                xarm_driver_.send_gripper_command(xarm_gripper_cmd_);
+                prev_xarm_gripper_cmd_ = xarm_gripper_cmd_;
             }
         }
 

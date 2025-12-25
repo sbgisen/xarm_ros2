@@ -73,6 +73,8 @@ namespace uf_robot_hardware
         std::vector<double> velocity_cmds_;
         std::vector<double> position_states_;
         std::vector<double> velocity_states_;
+        double prev_xarm_gripper_cmd_;
+        double xarm_gripper_cmd_;
 
         bool velocity_control_;
         bool initialized_;

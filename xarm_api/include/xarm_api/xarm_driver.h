@@ -41,6 +41,8 @@ namespace xarm_api
 
         sensor_msgs::msg::JointState* get_joint_states();
 
+        void send_gripper_command(double position);
+
     private:
         void _report_connect_changed_callback(bool connected, bool reported);
         void _report_data_callback(XArmReportData *report_data_ptr);
@@ -51,7 +53,7 @@ namespace xarm_api
         rclcpp_action::GoalResponse _handle_xarm_gripper_action_goal(const rclcpp_action::GoalUUID & uuid, std::shared_ptr<const control_msgs::action::ParallelGripperCommand::Goal> goal);
         rclcpp_action::CancelResponse _handle_xarm_gripper_action_cancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<control_msgs::action::ParallelGripperCommand>> goal_handle);
         void _handle_xarm_gripper_action_accepted(const std::shared_ptr<rclcpp_action::ServerGoalHandle<control_msgs::action::ParallelGripperCommand>> goal_handle);
-        void _xarm_gripper_action_execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<control_msgs::action::ParallelGripperCommand>> goal_handle);
+        void _xarm_gripper_action_execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<control_msgs::action::ParallelGripperCommand>> goal_handle, double position);
         void _pub_xarm_gripper_joint_states(float pos);
 
         void _init_bio_gripper(void);
