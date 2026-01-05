@@ -445,7 +445,9 @@ namespace uf_robot_hardware
         }
         if (add_gripper_) {
             if (std::fabs(xarm_gripper_cmd_ - prev_xarm_gripper_cmd_) > 0.0001) {
-                xarm_driver_.send_gripper_command(xarm_gripper_cmd_);
+                if (!xarm_driver_.send_gripper_command(xarm_gripper_cmd_)) {
+                    return hardware_interface::return_type::ERROR;
+                }
                 prev_xarm_gripper_cmd_ = xarm_gripper_cmd_;
             }
         }

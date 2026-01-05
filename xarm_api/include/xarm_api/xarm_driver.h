@@ -41,7 +41,7 @@ namespace xarm_api
 
         sensor_msgs::msg::JointState* get_joint_states();
 
-        void send_gripper_command(float position);
+        bool send_gripper_command(float position);
 
     private:
         void _report_connect_changed_callback(bool connected, bool reported);
@@ -50,7 +50,6 @@ namespace xarm_api
 
         void _init_xarm_gripper(void);
         inline float _xarm_gripper_pos_convert(float pos, bool reversed = false);
-        void _xarm_gripper_action_execute(float position);
         void _pub_xarm_gripper_joint_states(float pos);
 
         void _init_bio_gripper(void);

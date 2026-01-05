@@ -365,94 +365,43 @@ namespace xarm_api
         pub_joint_state(xarm_gripper_joint_state_msg_);
     }
 
-    void XArmDriver::_xarm_gripper_action_execute(float position)
+    bool XArmDriver::send_gripper_command(float position)
     {
-        xarm_gripper_init_loop_ = true;
-
         int ret;
-        float cur_pos = 0;
-        int err = 0;
+        int err;
         ret = arm->get_gripper_err_code(&err);
         if (ret != 0 || err != 0) {
             RCLCPP_ERROR(node_->get_logger(), "get_gripper_err_code, ret=%d, err=%d", ret, err);
-            return;
+            return false;
         }
-        ret = arm->get_gripper_position(&cur_pos);
-        _pub_xarm_gripper_joint_states(cur_pos);
-
         ret = arm->set_gripper_mode(0);
         if (ret != 0) {
             ret = arm->get_gripper_err_code(&err);
-            RCLCPP_WARN(node_->get_logger(), "set_gripper_mode, ret=%d, err=%d, cur_pos=%f", ret, err, cur_pos);
-            return;
+            RCLCPP_WARN(node_->get_logger(), "set_gripper_mode, ret=%d, err=%d", ret, err);
+            return false;
         }
         ret = arm->set_gripper_enable(true);
         if (ret != 0) {
             ret = arm->get_gripper_err_code(&err);
-            RCLCPP_WARN(node_->get_logger(), "set_gripper_enable, ret=%d, err=%d, cur_pos=%f", ret, err, cur_pos);
-            return;
+            RCLCPP_WARN(node_->get_logger(), "set_gripper_enable, ret=%d, err=%d", ret, err);
+            return false;
         }
         ret = arm->set_gripper_speed(xarm_gripper_speed_);
         if (ret != 0) {
             ret = arm->get_gripper_err_code(&err);
-            RCLCPP_WARN(node_->get_logger(), "set_gripper_speed, ret=%d, err=%d, cur_pos=%f", ret, err, cur_pos);
-            return;
+            RCLCPP_WARN(node_->get_logger(), "set_gripper_speed, ret=%d, err=%d", ret, err);
+            return false;
         }
-        float last_pos = -xarm_gripper_max_pos_;
-        float target_pos = _xarm_gripper_pos_convert(position, true);
-        bool is_move = true;
-        std::thread([this, &target_pos, &is_move, &cur_pos]() {
-            is_move = true;
-            int ret2 = arm->set_gripper_position(target_pos, true, -1, false); // set wait_motion=false
-            int err;
-            arm->get_gripper_err_code(&err);
-            RCLCPP_INFO(node_->get_logger(), "set_gripper_position, ret=%d, err=%d, cur_pos=%f", ret2, err, cur_pos);
-            is_move = false;
-        }).detach();
-        int cnt = 0;
-        bool is_succeed = false;
-        auto sltime = std::chrono::nanoseconds(1000000000 / xarm_gripper_frequency_);
-        while (is_move && rclcpp::ok())
-        {
-            std::this_thread::sleep_for(sltime);
-            ret = arm->get_gripper_position(&cur_pos);
-            if (ret == 0) {
-                if (!is_succeed) {
-                    if (fabs(last_pos - cur_pos) < xarm_gripper_threshold_) {
-                        cnt += 1;
-                        if (cnt >= xarm_gripper_threshold_times_ && fabs(target_pos - cur_pos) < 15) {
-                            xarm_gripper_joint_state_msg_.header.stamp = node_->get_clock()->now();
-                            for (int i = 0; i < xarm_gripper_joint_state_msg_.position.size(); i++) {
-                                xarm_gripper_joint_state_msg_.position[i] = _xarm_gripper_pos_convert(cur_pos);
-                            }
-                            is_succeed = true;
-                        }
-                    }
-                    else {
-                        cnt = 0;
-                        last_pos = cur_pos;
-                    }
-                }
-                xarm_gripper_joint_state_msg_.header.stamp = node_->get_clock()->now();
-                for (int i = 0; i < xarm_gripper_joint_state_msg_.position.size(); i++) {
-                    xarm_gripper_joint_state_msg_.position[i] = _xarm_gripper_pos_convert(cur_pos);
-                }
-                _pub_xarm_gripper_joint_states(cur_pos);
-            }
+        ret = arm->get_gripper_err_code(&err);
+        if (ret != 0 || err != 0) {
+            RCLCPP_ERROR(node_->get_logger(), "get_gripper_err_code, ret=%d, err=%d", ret, err);
+            return false;
         }
-        arm->get_gripper_position(&cur_pos);
-        RCLCPP_INFO(node_->get_logger(), "move finish, cur_pos=%f", cur_pos);
-        if (rclcpp::ok() && !is_succeed) {
-            xarm_gripper_joint_state_msg_.header.stamp = node_->get_clock()->now();
-            for (int i = 0; i < xarm_gripper_joint_state_msg_.position.size(); i++) {
-                xarm_gripper_joint_state_msg_.position[i] = _xarm_gripper_pos_convert(cur_pos);
-            }
-        }
-    }
-
-    void XArmDriver::send_gripper_command(float position)
-    {
-        std::thread{BIND_CLS_CB_1(&XArmDriver::_xarm_gripper_action_execute), position}.detach();
+        auto target_pos = _xarm_gripper_pos_convert(position, true);
+        ret = arm->set_gripper_position(target_pos, true, -1, false);
+        arm->get_gripper_err_code(&err);
+        RCLCPP_INFO(node_->get_logger(), "set_gripper_position, ret=%d, err=%d", ret, err);
+        return ret == 0;
     }
 
     void XArmDriver::_init_bio_gripper(void)
