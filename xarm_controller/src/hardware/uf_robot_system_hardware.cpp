@@ -7,6 +7,7 @@
  ============================================================================*/
 
 #include "xarm_controller/hardware/uf_robot_system_hardware.h"
+#include <limits>
 
 #define SERVICE_CALL_FAILED 999
 #define SERVICE_IS_PERSISTENT_BUT_INVALID 998
@@ -18,32 +19,6 @@ namespace uf_robot_hardware
 {
     static rclcpp::Logger LOGGER = rclcpp::get_logger("UFACTORY.RobotHW");
 
-    template<typename ServiceT, typename SharedRequest, typename SharedResponse>
-    int UFRobotSystemHardware::_call_request(std::shared_ptr<ServiceT> client, SharedRequest req, SharedResponse& res)
-    {
-        bool is_try_again = false;
-        int failed_cnts = 0;
-        while (!client->wait_for_service(std::chrono::seconds(1))) {
-            if (!rclcpp::ok()) {
-                RCLCPP_ERROR(LOGGER, "[%s] Interrupted while waiting for the service. Exiting.", robot_ip_.c_str());
-                exit(1);
-            }
-            if (!is_try_again) {
-                is_try_again = true;
-                RCLCPP_WARN(LOGGER, "[%s] service %s not available, waiting ...", robot_ip_.c_str(), client->get_service_name());
-            }
-            failed_cnts += 1;
-            if (failed_cnts >= 5) return WAIT_SERVICE_TIMEOUT;
-        }
-        auto result_future = client->async_send_request(req);
-        if (rclcpp::spin_until_future_complete(hw_node_, result_future, std::chrono::seconds(1)) != rclcpp::FutureReturnCode::SUCCESS)
-        {
-            // RCLCPP_ERROR(LOGGER, "[%s] Failed to call service %s", robot_ip_.c_str(), client->get_service_name());
-            return SERVICE_CALL_FAILED;
-        }
-        res = result_future.get();
-        return 0;
-    }
 
     void UFRobotSystemHardware::_init_ufactory_driver(void)
     {
@@ -51,9 +26,6 @@ namespace uf_robot_hardware
         node_options.allow_undeclared_parameters(true);
         node_options.automatically_declare_parameters_from_overrides(true);
         node_ = rclcpp::Node::make_shared("ufactory_driver", node_options);
-        hw_node_ = rclcpp::Node::make_shared("ufactory_robot_hw", node_options);
-
-        update_goal_state_pub_ = hw_node_->create_publisher<std_msgs::msg::Empty>("/rviz/moveit/update_goal_state", 1);
 
         std::thread th([this]() -> void {
             rclcpp::spin(node_);
@@ -103,7 +75,7 @@ namespace uf_robot_hardware
         }
 
         RCLCPP_INFO(LOGGER, "[%s] namespace: %s", robot_ip_.c_str(), node_->get_namespace());
-        RCLCPP_INFO(LOGGER, "[%s] robot_type: %s, hw_ns: %s, prefix: %s, report_type: %s", 
+        RCLCPP_INFO(LOGGER, "[%s] robot_type: %s, hw_ns: %s, prefix: %s, report_type: %s",
             robot_ip_.c_str(), robot_type.c_str(), hw_ns.c_str(), prefix.c_str(), report_type.c_str());
 
         int dof = 7;
@@ -134,7 +106,7 @@ namespace uf_robot_hardware
         }
         gripper_joint_name_ = prefix + "drive_joint";
         node_->get_parameter_or("xarm_gripper.max_pos", max_gripper_pos_, 850);
-        
+
         if (robot_type == "lite") add_gripper_ = false;
         node_->set_parameter(rclcpp::Parameter("add_gripper", add_gripper_));
 
@@ -143,7 +115,7 @@ namespace uf_robot_hardware
         if (it != info_.hardware_parameters.end()) {
             add_bio_gripper = (it->second == "True" || it->second == "true");
         }
-        
+
         if (robot_type == "lite") add_bio_gripper = false;
         node_->set_parameter(rclcpp::Parameter("add_bio_gripper", add_bio_gripper));
 
@@ -151,13 +123,11 @@ namespace uf_robot_hardware
         if (it != info_.hardware_parameters.end()) {
             velocity_control_ = (it->second == "True" || it->second == "true");
         }
-        RCLCPP_INFO(LOGGER, "[%s] dof: %d, velocity_control: %d, add_gripper: %d, add_bio_gripper: %d, baud_checkset: %d, default_gripper_baud: %d", 
+        RCLCPP_INFO(LOGGER, "[%s] dof: %d, velocity_control: %d, add_gripper: %d, add_bio_gripper: %d, baud_checkset: %d, default_gripper_baud: %d",
             robot_ip_.c_str(), dof, velocity_control_, add_gripper_, add_bio_gripper, baud_checkset, default_gripper_baud);
-        
+
         // 20250318, disable xarm_driver publish joint_states
         xarm_driver_.init(node_, robot_ip_, true);
-        // 20250318, get joint_states msg reference from xarm_driver
-        joint_state_msg_ = xarm_driver_.get_joint_states();
     }
 
     CallbackReturn UFRobotSystemHardware::on_init(const hardware_interface::HardwareInfo& info)
@@ -171,7 +141,6 @@ namespace uf_robot_hardware
         write_code_ = 0;
 
         initialized_ = false;
-        reactivate_controller_later_ = false;
 
         read_cnts_ = 0;
         read_max_time_ = 0;
@@ -181,7 +150,7 @@ namespace uf_robot_hardware
         memset(prev_cmds_float_, 0, sizeof(prev_cmds_float_));
 
         _init_ufactory_driver();
-        
+
         position_states_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
         velocity_states_.resize(info_.joints.size(), std::numeric_limits<double>::quiet_NaN());
         auto size = info_.joints.size();
@@ -189,6 +158,8 @@ namespace uf_robot_hardware
             size -= 1;
         position_cmds_.resize(size, std::numeric_limits<double>::quiet_NaN());
         velocity_cmds_.resize(size, std::numeric_limits<double>::quiet_NaN());
+        prev_xarm_gripper_cmd_ = std::numeric_limits<double>::quiet_NaN();
+        xarm_gripper_cmd_ = std::numeric_limits<double>::quiet_NaN();
 
         for (const hardware_interface::ComponentInfo & joint : info_.joints) {
             bool has_pos_cmd_interface = false;
@@ -241,8 +212,11 @@ namespace uf_robot_hardware
     {
         std::vector<hardware_interface::CommandInterface> command_interfaces;
         for (uint i = 0; i < info_.joints.size(); i++) {
-            if (info_.joints[i].name == gripper_joint_name_)
+            if (info_.joints[i].name == gripper_joint_name_){
+                command_interfaces.emplace_back(hardware_interface::CommandInterface(
+                    info_.joints[i].name, hardware_interface::HW_IF_POSITION, &xarm_gripper_cmd_));
                 continue;
+            }
             command_interfaces.emplace_back(hardware_interface::CommandInterface(
                 info_.joints[i].name, hardware_interface::HW_IF_POSITION, &position_cmds_[i]));
             command_interfaces.emplace_back(hardware_interface::CommandInterface(
@@ -258,39 +232,22 @@ namespace uf_robot_hardware
 		xarm_driver_.arm->set_mode(velocity_control_ ? XARM_MODE::VELO_JOINT : XARM_MODE::SERVO);
 		xarm_driver_.arm->set_state(XARM_STATE::START);
 
-        req_list_controller_ = std::make_shared<controller_manager_msgs::srv::ListControllers::Request>();
-        res_list_controller_ = std::make_shared<controller_manager_msgs::srv::ListControllers::Response>();
-        req_switch_controller_ = std::make_shared<controller_manager_msgs::srv::SwitchController::Request>();
-        res_switch_controller_ = std::make_shared<controller_manager_msgs::srv::SwitchController::Response>();
-
-        client_list_controller_ = hw_node_->create_client<controller_manager_msgs::srv::ListControllers>("/controller_manager/list_controllers");
-        client_switch_controller_ = hw_node_->create_client<controller_manager_msgs::srv::SwitchController>("/controller_manager/switch_controller");
-
-        for (uint i = 0; i < position_states_.size(); i++) {
+        for (uint i = 0; i < info_.joints.size(); i++) {
             if (std::isnan(position_states_[i])) {
                 position_states_[i] = 0;
-                if (i < position_cmds_.size()) {
-                    position_cmds_[i] = 0;
-                }
-            } else {
-                if (i < position_cmds_.size()) {
-                    position_cmds_[i] = position_states_[i];
-                }
             }
-        }
-        for (uint i = 0; i < velocity_states_.size(); i++) {
             if (std::isnan(velocity_states_[i])) {
                 velocity_states_[i] = 0;
-                if (i < velocity_cmds_.size()) {
-                    velocity_cmds_[i] = 0;
-                }
-            } else {
-                if (i < velocity_cmds_.size()) {
-                    velocity_cmds_[i] = velocity_states_[i];
-                }
             }
+            if (info_.joints[i].name == gripper_joint_name_) {
+                xarm_gripper_cmd_ = position_states_[i];
+                prev_xarm_gripper_cmd_ = xarm_gripper_cmd_;
+                continue;
+            }
+            position_cmds_[i] = position_states_[i];
+            velocity_cmds_[i] = velocity_states_[i];
         }
-        
+
         RCLCPP_INFO(LOGGER, "[%s] System Sucessfully started!", robot_ip_.c_str());
         return CallbackReturn::SUCCESS;
     }
@@ -316,7 +273,7 @@ namespace uf_robot_hardware
 			read_code_ = xarm_driver_.arm->get_joint_states(curr_read_position_, curr_read_velocity_, curr_read_effort_);
 		else
 			read_code_ = xarm_driver_.arm->get_servo_angle(curr_read_position_);
-        
+
         int ret;
         if (add_gripper_)
             ret = xarm_driver_.arm->get_gripper_position(&curr_read_gripper_position_);
@@ -352,17 +309,6 @@ namespace uf_robot_hardware
 				}
             }
 
-            // 20250318, update joint_states msg and publish
-            joint_state_msg_->header.stamp = curr_read_time_;
-            for(int i = 0; i < joint_state_msg_->position.size(); i++)
-            {
-                joint_state_msg_->position[i] = position_states_[i];
-                joint_state_msg_->velocity[i] = velocity_states_[i];
-                if (use_new)
-                    joint_state_msg_->effort[i] = (double)curr_read_effort_[i];
-            }
-            xarm_driver_.pub_joint_state(*joint_state_msg_);
-
             if (!initialized_) {
                 for (uint i = 0; i < position_states_.size(); i++) {
                     if (i >= position_cmds_.size() || i >= velocity_cmds_.size()) {
@@ -395,21 +341,15 @@ namespace uf_robot_hardware
     {
         if (_need_reset()) {
             initialized_ = false;
-            _deactivate_controller();
             return hardware_interface::return_type::OK;
         }
         initialized_ = true;
-        if(reactivate_controller_later_)
-        {
-            _activate_controller();
-            reactivate_controller_later_ = false;
-        }
         // std::string pos_str = "[ ";
         // std::string vel_str = "[ ";
-        // for (int i = 0; i < position_cmds_.size(); i++) { 
-        //     pos_str += std::to_string(position_cmds_[i]); 
+        // for (int i = 0; i < position_cmds_.size(); i++) {
+        //     pos_str += std::to_string(position_cmds_[i]);
         //     pos_str += " ";
-        //     vel_str += std::to_string(velocity_cmds_[i]); 
+        //     vel_str += std::to_string(velocity_cmds_[i]);
         //     vel_str += " ";
         // }
         // pos_str += "]";
@@ -418,7 +358,7 @@ namespace uf_robot_hardware
 
         int cmd_ret = 0;
         if (velocity_control_) {
-            for (int i = 0; i < velocity_cmds_.size(); i++) { 
+            for (int i = 0; i < velocity_cmds_.size(); i++) {
                 cmds_float_[i] = (float)velocity_cmds_[i];
             }
             // RCLCPP_INFO(LOGGER, "[%s] velocity: %s", robot_ip_.c_str(), vel_str.c_str());
@@ -428,7 +368,7 @@ namespace uf_robot_hardware
             }
         }
         else {
-            for (int i = 0; i < position_cmds_.size(); i++) { 
+            for (int i = 0; i < position_cmds_.size(); i++) {
                 cmds_float_[i] = (float)position_cmds_[i];
             }
             curr_write_time_ = node_->get_clock()->now();
@@ -440,59 +380,22 @@ namespace uf_robot_hardware
                 }
                 if (cmd_ret == 0) {
                     prev_write_time_ = curr_write_time_;
-                    for (int i = 0; i < 7; i++) { 
+                    for (int i = 0; i < 7; i++) {
                         prev_cmds_float_[i] = (float)cmds_float_[i];
                     }
                 }
             }
         }
+        if (add_gripper_) {
+            if (std::fabs(xarm_gripper_cmd_ - prev_xarm_gripper_cmd_) > 0.0001) {
+                if (!xarm_driver_.send_gripper_command(xarm_gripper_cmd_)) {
+                    return hardware_interface::return_type::ERROR;
+                }
+                prev_xarm_gripper_cmd_ = xarm_gripper_cmd_;
+            }
+        }
 
         return hardware_interface::return_type::OK;
-    }
-
-    void UFRobotSystemHardware::_deactivate_controller(void) {
-        if(reactivate_controller_later_)
-            return;
-        // RCLCPP_INFO(LOGGER, "DEACTIVATE CONTROLLER!! ");
-        int ret = _call_request(client_list_controller_, req_list_controller_, res_list_controller_);
-        bool valid_operation = false;
-        if (ret == 0 && res_list_controller_->controller.size() > 0) {
-            req_switch_controller_->activate_controllers.resize(0);
-            req_switch_controller_->deactivate_controllers.resize(res_list_controller_->controller.size());
-            for (uint i = 0; i < res_list_controller_->controller.size(); i++) {
-                // RCLCPP_ERROR(LOGGER, "STATE: %s", res_list_controller_->controller[i].state.c_str());
-                if(res_list_controller_->controller[i].state == std::string("active")){
-                // for situation of initial launch with emg stop pressed, launch file will activate controller and it takes a while
-                    valid_operation = true;
-                }
-                // req_switch_controller_->activate_controllers[i] = res_list_controller_->controller[i].name;
-                req_switch_controller_->deactivate_controllers[i] = res_list_controller_->controller[i].name;
-            }
-            req_switch_controller_->strictness = controller_manager_msgs::srv::SwitchController::Request::BEST_EFFORT;
-            req_switch_controller_->timeout = rclcpp::Duration::from_seconds(2.0);
-            if(valid_operation)
-            {
-                _call_request(client_switch_controller_, req_switch_controller_, res_switch_controller_);
-                reactivate_controller_later_ = true; // Not setting this indicator until activated controller disabled!
-            }
-        }
-    }
-
-    void UFRobotSystemHardware::_activate_controller(void) {
-        // RCLCPP_INFO(LOGGER, "ACTIVATE CONTROLLER!! ");
-        int ret = _call_request(client_list_controller_, req_list_controller_, res_list_controller_);
-        if (ret == 0 && res_list_controller_->controller.size() > 0) {
-            req_switch_controller_->deactivate_controllers.resize(0);
-            req_switch_controller_->activate_controllers.resize(res_list_controller_->controller.size());
-            for (uint i = 0; i < res_list_controller_->controller.size(); i++) {
-                req_switch_controller_->activate_controllers[i] = res_list_controller_->controller[i].name;
-                // req_switch_controller_->deactivate_controllers[i] = res_list_controller_->controller[i].name;
-            }
-            req_switch_controller_->strictness = controller_manager_msgs::srv::SwitchController::Request::BEST_EFFORT;
-            req_switch_controller_->timeout = rclcpp::Duration::from_seconds(2.0);
-            _call_request(client_switch_controller_, req_switch_controller_, res_switch_controller_);
-        }
-        update_goal_state_pub_->publish(update_goal_state_msg_);
     }
 
     bool UFRobotSystemHardware::_check_cmds_is_change(float *prev, float *cur, double threshold)

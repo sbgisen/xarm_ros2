@@ -41,6 +41,8 @@ namespace xarm_api
 
         sensor_msgs::msg::JointState* get_joint_states();
 
+        bool send_gripper_command(float position);
+
     private:
         void _report_connect_changed_callback(bool connected, bool reported);
         void _report_data_callback(XArmReportData *report_data_ptr);

@@ -122,6 +122,7 @@
       </joint>
       <xacro:if value="${add_gripper}">
         <joint name="${prefix}drive_joint">
+          <command_interface name="position"/>
           <state_interface name="position"/>
           <state_interface name="velocity"/>
         </joint>
