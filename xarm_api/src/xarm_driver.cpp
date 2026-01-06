@@ -577,7 +577,7 @@ namespace xarm_api
             return false;
         }
         auto target_pos = _xarm_gripper_pos_convert(position, true);
-        ret = arm->set_gripper_position(target_pos, true, -1, false);
+        ret = arm->set_gripper_position(target_pos, false, -1, false);
         arm->get_gripper_err_code(&err);
         RCLCPP_INFO(node_->get_logger(), "set_gripper_position, ret=%d, err=%d", ret, err);
         return ret == 0;
