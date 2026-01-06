@@ -290,7 +290,7 @@ namespace xarm_api
         }
         xarm_state_msg_.angle.resize(dof_);
 
-        if (in_ros_control_) {
+        if (!in_ros_control_) {
             joint_state_pub_ = hw_node_->create_publisher<sensor_msgs::msg::JointState>("joint_states", 10);
         }
         robot_state_pub_ = hw_node_->create_publisher<xarm_msgs::msg::RobotMsg>("robot_states", 10);
