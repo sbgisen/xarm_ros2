@@ -98,7 +98,6 @@ namespace uf_robot_hardware
         rclcpp::Time prev_write_time_;
 
         std::shared_ptr<rclcpp::Node> node_;
-        std::shared_ptr<rclcpp::Node> hw_node_;
         xarm_api::XArmDriver xarm_driver_;
 
         std_msgs::msg::Empty update_goal_state_msg_;

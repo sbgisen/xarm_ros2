@@ -26,7 +26,6 @@ namespace uf_robot_hardware
         node_options.allow_undeclared_parameters(true);
         node_options.automatically_declare_parameters_from_overrides(true);
         node_ = rclcpp::Node::make_shared("ufactory_driver", node_options);
-        hw_node_ = rclcpp::Node::make_shared("ufactory_robot_hw", node_options);
 
         std::thread th([this]() -> void {
             rclcpp::spin(node_);
