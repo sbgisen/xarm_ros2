@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro" name="xarm_gripper">
 
-  <xacro:macro name="xarm_gripper_urdf" params="prefix:='' attach_to:='' attach_xyz:='0 0 0' attach_rpy:='0 0 0' use_default_finger_tip:='true' ">
+  <xacro:macro name="xarm_gripper_urdf" params="prefix:='' attach_to:='' attach_xyz:='0 0 0' attach_rpy:='0 0 0' use_default_finger_tip:='true' use_collision_sphere:='false' ">
 
     <xacro:unless value="${attach_to == ''}">
       <joint name="${prefix}gripper_fix" type="fixed">
@@ -24,12 +24,24 @@
         origin_xyz="0 0 0"
         origin_rpy="0 0 0"
         material_name="${prefix}White" />
-      <collision>
-        <origin xyz="-0.0015 0 0.055" rpy="0 0 0"/>
-        <geometry>
-          <box size="0.053 0.1 0.1"/>
-        </geometry>
-      </collision>
+      <xacro:unless value="${use_collision_sphere}">
+        <collision>
+          <origin xyz="-0.0015 0 0.055" rpy="0 0 0"/>
+          <geometry>
+            <box size="0.053 0.1 0.1"/>
+          </geometry>
+         </collision>
+      </xacro:unless>
+      <xacro:if value="${use_collision_sphere}">
+        <xacro:common_link_sphere_collision name="sphere1" xyz="0.005 -0.002 0.041" radius="0.04"/>
+        <xacro:common_link_sphere_collision name="sphere2" xyz="0.0 0.029 0.026" radius="0.04"/>
+        <xacro:common_link_sphere_collision name="sphere3" xyz="0.0 0.03 0.067" radius="0.04"/>
+        <xacro:common_link_sphere_collision name="sphere4" xyz="0.0 -0.037 0.023" radius="0.04"/>
+        <xacro:common_link_sphere_collision name="sphere5" xyz="0.0 -0.033 0.067" radius="0.04"/>
+        <xacro:common_link_sphere_collision name="sphere6" xyz="0.0 -0.004 0.067" radius="0.04"/>
+        <xacro:common_link_sphere_collision name="sphere7" xyz="0.021 -0.055 0.022" radius="0.03"/>
+        <xacro:common_link_sphere_collision name="sphere8" xyz="0.048 -0.053 0.025" radius="0.03"/>
+      </xacro:if>
     </link>
     <link name="${prefix}left_outer_knuckle">
       <inertial>
@@ -44,12 +56,19 @@
         origin_xyz="0 0 0"
         origin_rpy="0 0 0"
         material_name="${prefix}Silver" />
-      <collision>
-        <origin xyz="0 0.015 0.02" rpy="0.48 0 0"/>
-        <geometry>
-          <box size="0.012 0.069 0.033"/>
-        </geometry>
-      </collision>
+      <xacro:unless value="${use_collision_sphere}">
+        <collision>
+          <origin xyz="0 0.015 0.02" rpy="0.48 0 0"/>
+          <geometry>
+            <box size="0.012 0.069 0.033"/>
+          </geometry>
+        </collision>
+      </xacro:unless>
+      <xacro:if value="${use_collision_sphere}">
+        <xacro:common_link_sphere_collision name="sphere1" xyz="0.0 0.044 0.022" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere2" xyz="0.0 0.039 0.036" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere3" xyz="0.0 0.035 0.016" radius="0.01"/>
+      </xacro:if>
     </link>
     <joint name="${prefix}drive_joint" type="revolute">
       <origin xyz="0 0.035 0.059098" rpy="0 0 0" />
@@ -71,18 +90,33 @@
         origin_xyz="0 0 0"
         origin_rpy="0 0 0"
         material_name="${prefix}Silver" />
-      <collision>
-        <origin xyz="0 -0.0154 0.036" rpy="0 0 0"/>
-        <geometry>
-          <box size="0.016 0.0068 0.034"/>
-        </geometry>
-      </collision>
-      <collision>
-        <origin xyz="0 -0.008 0.008" rpy="0.8 0 0"/>
-        <geometry>
-          <box size="0.016 0.012 0.036"/>
-        </geometry>
-      </collision>
+      <xacro:unless value="${use_collision_sphere}">
+        <collision>
+          <origin xyz="0 -0.0154 0.036" rpy="0 0 0"/>
+          <geometry>
+            <box size="0.016 0.0068 0.034"/>
+          </geometry>
+        </collision>
+        <collision>
+          <origin xyz="0 -0.008 0.008" rpy="0.8 0 0"/>
+          <geometry>
+            <box size="0.016 0.012 0.036"/>
+          </geometry>
+        </collision>
+      </xacro:unless>
+      <xacro:if value="${use_collision_sphere}">
+        <xacro:common_link_sphere_collision name="sphere1" xyz="0.0 -0.005 0.005" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere2" xyz="0.0 -0.014 0.014" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere3" xyz="-0.009 -0.02 0.025" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere4" xyz="-0.009 -0.02 0.036" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere5" xyz="-0.009 -0.02 0.047" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere6" xyz="0.0 -0.02 0.025" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere7" xyz="0.009 -0.02 0.025" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere8" xyz="0.0 -0.02 0.036" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere9" xyz="0.0 -0.02 0.047" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere10" xyz="0.009 -0.02 0.036" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere11" xyz="0.009 -0.02 0.047" radius="0.01"/>
+      </xacro:if>
     </link>
     <joint name="${prefix}left_finger_joint" type="revolute">
       <origin xyz="0 0.035465 0.042039" rpy="0 0 0" />
@@ -105,12 +139,18 @@
         origin_xyz="0 0 0"
         origin_rpy="0 0 0"
         material_name="${prefix}Silver" />
-      <collision>
-        <origin xyz="0 0.016 0.02" rpy="-0.7 0 0"/>
-        <geometry>
-          <box size="0.027 0.012 0.061"/>
-        </geometry>
-      </collision>
+      <xacro:unless value="${use_collision_sphere}">
+        <collision>
+          <origin xyz="0 0.016 0.02" rpy="-0.7 0 0"/>
+          <geometry>
+            <box size="0.027 0.012 0.061"/>
+          </geometry>
+        </collision>
+      </xacro:unless>
+      <xacro:if value="${use_collision_sphere}">
+        <xacro:common_link_sphere_collision name="sphere1" xyz="0.009 0.029 0.033" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere2" xyz="-0.009 0.029 0.033" radius="0.01"/>
+      </xacro:if>
     </link>
     <joint name="${prefix}left_inner_knuckle_joint" type="revolute">
       <origin xyz="0 0.02 0.074098" rpy="0 0 0" />
@@ -133,12 +173,19 @@
         origin_xyz="0 0 0"
         origin_rpy="0 0 0"
         material_name="${prefix}Silver" />
-      <collision>
-        <origin xyz="0 -0.015 0.02" rpy="-0.48 0 0"/>
-        <geometry>
-          <box size="0.012 0.069 0.033"/>
-        </geometry>
-      </collision>
+      <xacro:unless value="${use_collision_sphere}">
+        <collision>
+          <origin xyz="0 -0.015 0.02" rpy="-0.48 0 0"/>
+          <geometry>
+            <box size="0.012 0.069 0.033"/>
+          </geometry>
+        </collision>
+      </xacro:unless>
+      <xacro:if value="${use_collision_sphere}">
+        <xacro:common_link_sphere_collision name="sphere1" xyz="0.0 -0.044 0.022" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere2" xyz="0.0 -0.039 0.036" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere3" xyz="0.0 -0.035 0.016" radius="0.01"/>
+      </xacro:if>
     </link>
     <joint name="${prefix}right_outer_knuckle_joint" type="revolute">
       <origin xyz="0 -0.035 0.059098" rpy="0 0 0" />
@@ -167,12 +214,27 @@
           <box size="0.016 0.0068 0.034"/>
         </geometry>
       </collision>
-      <collision>
-        <origin xyz="0 0.008 0.008" rpy="-0.8 0 0"/>
-        <geometry>
-          <box size="0.016 0.012 0.036"/>
-        </geometry>
-      </collision>
+      <xacro:unless value="${use_collision_sphere}">
+        <collision>
+          <origin xyz="0 0.008 0.008" rpy="-0.8 0 0"/>
+          <geometry>
+            <box size="0.016 0.012 0.036"/>
+          </geometry>
+        </collision>
+      </xacro:unless>
+      <xacro:if value="${use_collision_sphere}">
+        <xacro:common_link_sphere_collision name="sphere1" xyz="0.0 0.005 0.005" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere2" xyz="0.0 0.014 0.014" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere3" xyz="-0.009 0.02 0.025" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere4" xyz="-0.009 0.02 0.036" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere5" xyz="-0.009 0.02 0.047" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere6" xyz="0.0 0.02 0.025" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere7" xyz="0.009 0.02 0.025" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere8" xyz="0.0 0.02 0.036" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere9" xyz="0.0 0.02 0.047" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere10" xyz="0.009 0.02 0.036" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere11" xyz="0.009 0.02 0.047" radius="0.01"/>
+      </xacro:if>
     </link>
     <joint name="${prefix}right_finger_joint" type="revolute">
       <origin xyz="0 -0.035465 0.042039" rpy="0 0 0" />
@@ -195,12 +257,18 @@
         origin_xyz="0 0 0"
         origin_rpy="0 0 0"
         material_name="${prefix}Silver" />
-      <collision>
-        <origin xyz="0 -0.016 0.02" rpy="0.7 0 0"/>
-        <geometry>
-          <box size="0.027 0.012 0.061"/>
-        </geometry>
-      </collision>
+      <xacro:unless value="${use_collision_sphere}">
+        <collision>
+          <origin xyz="0 -0.016 0.02" rpy="0.7 0 0"/>
+          <geometry>
+            <box size="0.027 0.012 0.061"/>
+          </geometry>
+        </collision>
+      </xacro:unless>
+      <xacro:if value="${use_collision_sphere}">
+        <xacro:common_link_sphere_collision name="sphere1" xyz="-0.009 -0.029 0.033" radius="0.01"/>
+        <xacro:common_link_sphere_collision name="sphere2" xyz="0.009 -0.029 0.033" radius="0.01"/>
+      </xacro:if>
     </link>
     <joint name="${prefix}right_inner_knuckle_joint" type="revolute">
       <origin xyz="0 -0.02 0.074098" rpy="0 0 0" />
