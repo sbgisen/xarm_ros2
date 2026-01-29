@@ -10,7 +10,8 @@
     joint6_lower_limit:=${-1.69297}  joint6_upper_limit:=${pi}
     joint7_lower_limit:=${-2.0*pi}  joint7_upper_limit:=${2.0*pi}
     model_num:=0
-    inertial_params_filename:='' kinematics_params_filename:='' "
+    inertial_params_filename:='' kinematics_params_filename:=''
+    use_collision_sphere:=false"
     >
 
     <!-- define property -->
@@ -68,12 +69,14 @@
         origin_xyz="0 0 0"
         origin_rpy="0 0 0"
         material_name="${prefix}White" />
-      <xacro:common_link_collision
-        mesh_filename="${collision_dir}/link_base"
-        add_mesh_suffix="${add_mesh_suffix}"
-        other_mesh_suffix="${collison_mesh_suffix}"
-        origin_xyz="0 0 0"
-        origin_rpy="0 0 0" />
+      <xacro:unless value="${use_collision_sphere}">
+        <xacro:common_link_collision
+          mesh_filename="${collision_dir}/link_base"
+          add_mesh_suffix="${add_mesh_suffix}"
+          other_mesh_suffix="${collison_mesh_suffix}"
+          origin_xyz="0 0 0"
+          origin_rpy="0 0 0" />
+      </xacro:unless>
     </link>
     <link name="${prefix}link1">
       <xacro:common_link_inertial
@@ -84,12 +87,20 @@
         origin_xyz="0 0 0"
         origin_rpy="0 0 0"
         material_name="${prefix}White" />
-      <xacro:common_link_collision
-        mesh_filename="${collision_dir}/link1"
-        add_mesh_suffix="${add_mesh_suffix}"
-        other_mesh_suffix="${collison_mesh_suffix}"
-        origin_xyz="0 0 0"
-        origin_rpy="0 0 0" />
+      <xacro:unless value="${use_collision_sphere}">
+        <xacro:common_link_collision
+          mesh_filename="${collision_dir}/link1"
+          add_mesh_suffix="${add_mesh_suffix}"
+          other_mesh_suffix="${collison_mesh_suffix}"
+          origin_xyz="0 0 0"
+          origin_rpy="0 0 0" />
+      </xacro:unless>
+      <xacro:if value="${use_collision_sphere}">
+        <xacro:common_link_sphere_collision name="sphere1" xyz="0 0 -0.057" radius="0.06"/>
+        <xacro:common_link_sphere_collision name="sphere2" xyz="0 0 -0.113" radius="0.06"/>
+        <xacro:common_link_sphere_collision name="sphere3" xyz="0 -0.008 -0.004" radius="0.06"/>
+        <xacro:common_link_sphere_collision name="sphere4" xyz="0 0.04 -0.004" radius="0.06"/>
+      </xacro:if>
     </link>
     <joint name="${prefix}joint1" type="revolute">
       <!-- <origin xyz="0 0 0.267" rpy="0 0 0" /> -->
@@ -113,12 +124,22 @@
         origin_xyz="0 0 0"
         origin_rpy="0 0 0"
         material_name="${prefix}White" />
-      <xacro:common_link_collision
-        mesh_filename="${collision_dir}/link2"
-        add_mesh_suffix="${add_mesh_suffix}"
-        other_mesh_suffix="${collison_mesh_suffix}"
-        origin_xyz="0 0 0"
-        origin_rpy="0 0 0" />
+      <xacro:unless value="${use_collision_sphere}">
+        <xacro:common_link_collision
+          mesh_filename="${collision_dir}/link2"
+          add_mesh_suffix="${add_mesh_suffix}"
+          other_mesh_suffix="${collison_mesh_suffix}"
+          origin_xyz="0 0 0"
+          origin_rpy="0 0 0" />
+      </xacro:unless>
+      <xacro:if value="${use_collision_sphere}">
+        <xacro:common_link_sphere_collision name="sphere1" xyz="0 -0.105 0.008" radius="0.053"/>
+        <xacro:common_link_sphere_collision name="sphere2" xyz="0 -0.105 0.077" radius="0.053"/>
+        <xacro:common_link_sphere_collision name="sphere3" xyz="0 -0.16 0.003" radius="0.055"/>
+        <xacro:common_link_sphere_collision name="sphere4" xyz="0 -0.001 0.077" radius="0.053"/>
+        <xacro:common_link_sphere_collision name="sphere5" xyz="0 -0.055 0.077" radius="0.053"/>
+        <xacro:common_link_sphere_collision name="sphere6" xyz="0 -0.105 0.045" radius="0.053"/>
+      </xacro:if>
     </link>
     <joint name="${prefix}joint2" type="revolute">
       <!-- <origin xyz="0 0 0" rpy="-1.5708 0 0" /> -->
@@ -142,12 +163,22 @@
         origin_xyz="0 0 0"
         origin_rpy="0 0 0"
         material_name="${prefix}White" />
-      <xacro:common_link_collision
-        mesh_filename="${collision_dir}/link3"
-        add_mesh_suffix="${add_mesh_suffix}"
-        other_mesh_suffix="${collison_mesh_suffix}"
-        origin_xyz="0 0 0"
-        origin_rpy="0 0 0" />
+      <xacro:unless value="${use_collision_sphere}">
+        <xacro:common_link_collision
+          mesh_filename="${collision_dir}/link3"
+          add_mesh_suffix="${add_mesh_suffix}"
+          other_mesh_suffix="${collison_mesh_suffix}"
+          origin_xyz="0 0 0"
+          origin_rpy="0 0 0" />
+      </xacro:unless>
+      <xacro:if value="${use_collision_sphere}">
+        <xacro:common_link_sphere_collision name="sphere1" xyz="0.051 0.013 0.0" radius="0.05"/>
+        <xacro:common_link_sphere_collision name="sphere2" xyz="0.051 -0.034 0.0" radius="0.06"/>
+        <xacro:common_link_sphere_collision name="sphere3" xyz="0.051 0.038 0.0" radius="0.05"/>
+        <xacro:common_link_sphere_collision name="sphere4" xyz="0.01 0.031 -0.019" radius="0.05"/>
+        <xacro:common_link_sphere_collision name="sphere5" xyz="0.0 0.0 -0.091" radius="0.06"/>
+        <xacro:common_link_sphere_collision name="sphere6" xyz="0.008 0.013 -0.055" radius="0.06"/>
+      </xacro:if>
     </link>
     <joint name="${prefix}joint3" type="revolute">
       <!-- <origin xyz="0 -0.293 0" rpy="1.5708 0 0" /> -->
@@ -171,12 +202,24 @@
         origin_xyz="0 0 0"
         origin_rpy="0 0 0"
         material_name="${prefix}White" />
-      <xacro:common_link_collision
-        mesh_filename="${collision_dir}/link4"
-        add_mesh_suffix="${add_mesh_suffix}"
-        other_mesh_suffix="${collison_mesh_suffix}"
-        origin_xyz="0 0 0"
-        origin_rpy="0 0 0" />
+      <xacro:unless value="${use_collision_sphere}">
+        <xacro:common_link_collision
+          mesh_filename="${collision_dir}/link4"
+          add_mesh_suffix="${add_mesh_suffix}"
+          other_mesh_suffix="${collison_mesh_suffix}"
+          origin_xyz="0 0 0"
+          origin_rpy="0 0 0" />
+      </xacro:unless>
+      <xacro:if value="${use_collision_sphere}">
+        <xacro:common_link_sphere_collision name="sphere1" xyz="0.078 -0.144 0.0" radius="0.052"/>
+        <xacro:common_link_sphere_collision name="sphere2" xyz="0.078 -0.114 0.0" radius="0.052"/>
+        <xacro:common_link_sphere_collision name="sphere3" xyz="0.078 -0.08 0.072" radius="0.052"/>
+        <xacro:common_link_sphere_collision name="sphere4" xyz="0.078 -0.08 0" radius="0.052"/>
+        <xacro:common_link_sphere_collision name="sphere5" xyz="0.078 -0.08 0.041" radius="0.052"/>
+        <xacro:common_link_sphere_collision name="sphere6" xyz="0.0 0.0 0.066" radius="0.052"/>
+        <xacro:common_link_sphere_collision name="sphere7" xyz="0.042 -0.045 0.072" radius="0.052"/>
+        <xacro:common_link_sphere_collision name="sphere8" xyz="0.017 -0.022 0.068" radius="0.052"/>
+      </xacro:if>
     </link>
     <joint name="${prefix}joint4" type="revolute">
       <!-- <origin xyz="0.0525 0 0" rpy="1.5708 0 0" /> -->
@@ -200,12 +243,23 @@
         origin_xyz="0 0 0"
         origin_rpy="0 0 0"
         material_name="${prefix}White" />
-      <xacro:common_link_collision
-        mesh_filename="${collision_dir}/link5"
-        add_mesh_suffix="${add_mesh_suffix}"
-        other_mesh_suffix="${collison_mesh_suffix}"
-        origin_xyz="0 0 0"
-        origin_rpy="0 0 0" />
+      <xacro:unless value="${use_collision_sphere}">
+        <xacro:common_link_collision
+          mesh_filename="${collision_dir}/link5"
+          add_mesh_suffix="${add_mesh_suffix}"
+          other_mesh_suffix="${collison_mesh_suffix}"
+          origin_xyz="0 0 0"
+          origin_rpy="0 0 0" />
+      </xacro:unless>
+      <xacro:if value="${use_collision_sphere}">
+        <xacro:common_link_sphere_collision name="sphere1" xyz="0.0 0.061 0.0" radius="0.04"/>
+        <xacro:common_link_sphere_collision name="sphere2" xyz="0.0 -0.019 0.0" radius="0.04"/>
+        <xacro:common_link_sphere_collision name="sphere3" xyz="0.0 0.031 0.0" radius="0.04"/>
+        <xacro:common_link_sphere_collision name="sphere4" xyz="0.0 0.064 -0.045" radius="0.04"/>
+        <xacro:common_link_sphere_collision name="sphere5" xyz="0.0 0.039 -0.082" radius="0.05"/>
+        <xacro:common_link_sphere_collision name="sphere6" xyz="0.0 0.013 -0.116" radius="0.05"/>
+        <xacro:common_link_sphere_collision name="sphere7" xyz="0.0 0.013 -0.152" radius="0.05"/>
+      </xacro:if>
     </link>
     <joint name="${prefix}joint5" type="revolute">
       <!-- <origin xyz="0.0775 -0.3425 0" rpy="1.5708 0 0" /> -->
@@ -229,12 +283,22 @@
         origin_xyz="0 0 0"
         origin_rpy="0 0 0"
         material_name="${prefix}White" />
-      <xacro:common_link_collision
-        mesh_filename="${collision_dir}/link6"
-        add_mesh_suffix="${add_mesh_suffix}"
-        other_mesh_suffix="${collison_mesh_suffix}"
-        origin_xyz="0 0 0"
-        origin_rpy="0 0 0" />
+      <xacro:unless value="${use_collision_sphere}">
+        <xacro:common_link_collision
+          mesh_filename="${collision_dir}/link6"
+          add_mesh_suffix="${add_mesh_suffix}"
+          other_mesh_suffix="${collison_mesh_suffix}"
+          origin_xyz="0 0 0"
+          origin_rpy="0 0 0" />
+      </xacro:unless>
+      <xacro:if value="${use_collision_sphere}">
+        <xacro:common_link_sphere_collision name="sphere1" xyz="0.076 0 0" radius="0.05"/>
+        <xacro:common_link_sphere_collision name="sphere2" xyz="0.076 0.042 0" radius="0.05"/>
+        <xacro:common_link_sphere_collision name="sphere3" xyz="0.043 0.0 0.01" radius="0.05"/>
+        <xacro:common_link_sphere_collision name="sphere4" xyz="0.01 0.0 0.018" radius="0.05"/>
+        <xacro:common_link_sphere_collision name="sphere5" xyz="-0.004 0.0 0.032" radius="0.04"/>
+        <xacro:common_link_sphere_collision name="sphere6" xyz="-0.004 0.0 0.01" radius="0.04"/>
+      </xacro:if>
     </link>
     <joint name="${prefix}joint6" type="revolute">
       <!-- <origin xyz="0 0 0" rpy="1.5708 0 0" /> -->
@@ -258,12 +322,18 @@
         origin_xyz="0 0 0"
         origin_rpy="0 0 0"
         material_name="${prefix}Silver" />
-      <xacro:common_link_collision
-        mesh_filename="${link7_collision}"
-        add_mesh_suffix="${add_mesh_suffix}"
-        other_mesh_suffix="${collison_mesh_suffix}"
-        origin_xyz="0 0 0"
-        origin_rpy="0 0 0" />
+      <xacro:unless value="${use_collision_sphere}">
+        <xacro:common_link_collision
+          mesh_filename="${link7_collision}"
+          add_mesh_suffix="${add_mesh_suffix}"
+          other_mesh_suffix="${collison_mesh_suffix}"
+          origin_xyz="0 0 0"
+          origin_rpy="0 0 0" />
+      </xacro:unless>
+      <xacro:if value="${use_collision_sphere}">
+        <xacro:common_link_sphere_collision name="sphere1" xyz="0.0 0.0 0.004" radius="0.05"/>
+        <xacro:common_link_sphere_collision name="sphere2" xyz="0.0 -0.047 0.003" radius="0.04"/>
+      </xacro:if>
     </link>
     <joint name="${prefix}joint7" type="revolute">
       <!-- <origin xyz="0.076 0.097 0" rpy="-1.5708 0 0" /> -->
