@@ -361,10 +361,19 @@ namespace uf_robot_hardware
             for (int i = 0; i < velocity_cmds_.size(); i++) {
                 cmds_float_[i] = (float)velocity_cmds_[i];
             }
+            curr_write_time_ = node_->get_clock()->now();
             // RCLCPP_INFO(LOGGER, "[%s] velocity: %s", robot_ip_.c_str(), vel_str.c_str());
-            cmd_ret = xarm_driver_.arm->vc_set_joint_velocity(cmds_float_, true, VELO_DURATION);
-            if (cmd_ret != 0) {
-                RCLCPP_WARN(LOGGER, "[%s] vc_set_joint_velocity, ret=%d", robot_ip_.c_str(), cmd_ret);
+            if (curr_write_time_.seconds() - prev_write_time_.seconds() > 1 || _check_cmds_is_change(prev_cmds_float_, cmds_float_)) {
+                cmd_ret = xarm_driver_.arm->vc_set_joint_velocity(cmds_float_, true, VELO_DURATION);
+                if (cmd_ret != 0) {
+                    RCLCPP_WARN(LOGGER, "[%s] vc_set_joint_velocity, ret=%d", robot_ip_.c_str(), cmd_ret);
+                }
+                if (cmd_ret == 0) {
+                    prev_write_time_ = curr_write_time_;
+                    for (int i = 0; i < 7; i++) {
+                        prev_cmds_float_[i] = (float)cmds_float_[i];
+                    }
+                }
             }
         }
         else {
