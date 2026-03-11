@@ -360,7 +360,7 @@ namespace uf_robot_hardware
         if (velocity_control_) {
             for (int i = 0; i < velocity_cmds_.size(); i++) {
                 cmds_float_[i] = (float)velocity_cmds_[i];
-                if (std::fabs(cmds_float_[i]) < 0.0001) {
+                if (std::fabs(cmds_float_[i]) < 0.001) {
                     cmds_float_[i] = 0.0;
                 }
             }
