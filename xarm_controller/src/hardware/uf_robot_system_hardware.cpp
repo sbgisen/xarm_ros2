@@ -360,18 +360,14 @@ namespace uf_robot_hardware
         if (velocity_control_) {
             for (int i = 0; i < velocity_cmds_.size(); i++) {
                 cmds_float_[i] = (float)velocity_cmds_[i];
+                if (std::fabs(cmds_float_[i]) < 0.0001) {
+                    cmds_float_[i] = 0.0;
+                }
             }
             // RCLCPP_INFO(LOGGER, "[%s] velocity: %s", robot_ip_.c_str(), vel_str.c_str());
-            if (_check_cmds_is_change(prev_cmds_float_, cmds_float_)) {
-                cmd_ret = xarm_driver_.arm->vc_set_joint_velocity(cmds_float_, true, VELO_DURATION);
-                if (cmd_ret != 0) {
-                    RCLCPP_WARN(LOGGER, "[%s] vc_set_joint_velocity, ret=%d", robot_ip_.c_str(), cmd_ret);
-                }
-                if (cmd_ret == 0) {
-                    for (int i = 0; i < 7; i++) {
-                        prev_cmds_float_[i] = (float)cmds_float_[i];
-                    }
-                }
+            cmd_ret = xarm_driver_.arm->vc_set_joint_velocity(cmds_float_, true, VELO_DURATION);
+            if (cmd_ret != 0) {
+                RCLCPP_WARN(LOGGER, "[%s] vc_set_joint_velocity, ret=%d", robot_ip_.c_str(), cmd_ret);
             }
         }
         else {
